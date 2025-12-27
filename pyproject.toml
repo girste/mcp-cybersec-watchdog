@@ -1,0 +1,51 @@
+[build-system]
+requires = ["setuptools>=68.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "mcp-cybersec-watchdog"
+version = "0.1.0"
+description = "Cybersecurity monitoring and analysis for Linux servers via MCP"
+readme = "README.md"
+requires-python = ">=3.10"
+license = {text = "MIT"}
+authors = [
+    {name = "Girste", email = "me@girste.com"}
+]
+keywords = ["mcp", "security", "audit", "linux", "server"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: System Administrators",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+]
+
+dependencies = [
+    "mcp>=1.0.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.4.0",
+    "black>=23.0.0",
+    "ruff>=0.1.0",
+]
+
+[project.scripts]
+mcp-watchdog = "mcp_security.server:cli_main"
+
+[project.urls]
+Homepage = "https://github.com/girste/mcp-cybersec-watchdog"
+Repository = "https://github.com/girste/mcp-cybersec-watchdog"
+Issues = "https://github.com/girste/mcp-cybersec-watchdog/issues"
+
+[tool.black]
+line-length = 100
+target-version = ["py310"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py310"
