@@ -21,9 +21,11 @@ async def list_tools() -> list[Tool]:
     return [
         Tool(
             name="security_audit",
-            description="Run comprehensive security audit of the Linux server. "
-                       "Analyzes firewall, SSH config, failed login attempts, and fail2ban status. "
-                       "Returns detailed security report with findings and recommendations.",
+            description="Run comprehensive cybersecurity audit of the Linux server. "
+                       "Analyzes: firewall (ufw/iptables/firewalld), SSH configuration, "
+                       "threat patterns, fail2ban, network services/open ports, Docker security, "
+                       "security updates, MAC (AppArmor/SELinux), and kernel hardening. "
+                       "Returns detailed JSON report with security score and actionable recommendations.",
             inputSchema={
                 "type": "object",
                 "properties": {

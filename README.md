@@ -54,24 +54,31 @@ mcp-watchdog test
 
 ### MCP Integration
 
-Add to your MCP settings:
+Add to your Claude Desktop config (`~/Library/Application Support/Claude/claude_desktop_config.json` on macOS or `%APPDATA%\Claude\claude_desktop_config.json` on Windows):
 
 ```json
 {
   "mcpServers": {
     "cybersec-watchdog": {
-      "command": "mcp-watchdog",
+      "command": "/path/to/venv/bin/mcp-watchdog",
       "env": {}
     }
   }
 }
 ```
 
-Then use from your AI assistant:
+Or use the included config file:
+```bash
+cp claude_desktop_config.json ~/Library/Application\ Support/Claude/
+```
+
+Then from Claude Desktop:
 
 ```
 Run a security audit on this server
 ```
+
+The tool will return a comprehensive JSON report with all security findings.
 
 ## Example Output
 
