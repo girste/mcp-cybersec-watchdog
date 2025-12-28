@@ -2,10 +2,12 @@
 
 > Cybersecurity monitoring and analysis for Linux servers via MCP
 
-Comprehensive security audit tool that analyzes firewall configuration, SSH hardening, threat patterns, and fail2ban status. Returns a structured security report with actionable recommendations.
+Get a **complete security audit in 30 seconds**. Analyzes firewall, SSH, threats, fail2ban, Docker, kernel hardening and more. Returns actionable recommendations with zero configuration.
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
+[![Tests](https://github.com/girste/mcp-cybersec-watchdog/actions/workflows/test.yml/badge.svg)](https://github.com/girste/mcp-cybersec-watchdog/actions/workflows/test.yml)
+[![PyPI](https://img.shields.io/badge/PyPI-ready-green.svg)](https://pypi.org)
 
 ## Why?
 
