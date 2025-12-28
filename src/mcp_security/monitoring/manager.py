@@ -75,7 +75,14 @@ class MonitoringManager:
         # Start daemon in background
         try:
             process = subprocess.Popen(
-                [str(watchdog_path), "monitor", "--interval", str(interval_seconds), "--log-dir", str(self.log_dir)],
+                [
+                    str(watchdog_path),
+                    "monitor",
+                    "--interval",
+                    str(interval_seconds),
+                    "--log-dir",
+                    str(self.log_dir),
+                ],
                 stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE,
                 start_new_session=True,
