@@ -11,10 +11,7 @@ def check_apparmor():
     # Try with passwordless sudo (requires setup-sudo.sh configuration)
     try:
         result = subprocess.run(
-            ["sudo", "-n", "apparmor_status"],
-            capture_output=True,
-            text=True,
-            timeout=5
+            ["sudo", "-n", "apparmor_status"], capture_output=True, text=True, timeout=5
         )
 
         # If passwordless sudo not configured, command will fail
@@ -37,15 +34,15 @@ def check_apparmor():
     complain_count = 0
     unconfined_count = 0
 
-    enforce_match = re.search(r'(\d+) profiles are in enforce mode', output)
+    enforce_match = re.search(r"(\d+) profiles are in enforce mode", output)
     if enforce_match:
         enforce_count = int(enforce_match.group(1))
 
-    complain_match = re.search(r'(\d+) profiles are in complain mode', output)
+    complain_match = re.search(r"(\d+) profiles are in complain mode", output)
     if complain_match:
         complain_count = int(complain_match.group(1))
 
-    unconfined_match = re.search(r'(\d+) processes are unconfined', output)
+    unconfined_match = re.search(r"(\d+) processes are unconfined", output)
     if unconfined_match:
         unconfined_count = int(unconfined_match.group(1))
 
@@ -54,7 +51,7 @@ def check_apparmor():
         "enabled": enabled,
         "enforce_count": enforce_count,
         "complain_count": complain_count,
-        "unconfined_count": unconfined_count
+        "unconfined_count": unconfined_count,
     }
 
 
@@ -70,12 +67,7 @@ def check_selinux():
     enabled = mode in ("enforcing", "permissive")
     enforcing = mode == "enforcing"
 
-    return {
-        "type": "selinux",
-        "enabled": enabled,
-        "enforcing": enforcing,
-        "mode": mode
-    }
+    return {"type": "selinux", "enabled": enabled, "enforcing": enforcing, "mode": mode}
 
 
 def analyze_mac():
@@ -86,22 +78,23 @@ def analyze_mac():
         issues = []
 
         if not apparmor["enabled"]:
-            issues.append({
-                "severity": "high",
-                "message": "AppArmor is not enabled",
-                "recommendation": "Enable AppArmor for mandatory access control protection"
-            })
+            issues.append(
+                {
+                    "severity": "high",
+                    "message": "AppArmor is not enabled",
+                    "recommendation": "Enable AppArmor for mandatory access control protection",
+                }
+            )
         elif apparmor["complain_count"] > apparmor["enforce_count"]:
-            issues.append({
-                "severity": "medium",
-                "message": f"{apparmor['complain_count']} profiles in complain mode",
-                "recommendation": "Move profiles from complain to enforce mode for better security"
-            })
+            issues.append(
+                {
+                    "severity": "medium",
+                    "message": f"{apparmor['complain_count']} profiles in complain mode",
+                    "recommendation": "Move profiles from complain to enforce mode for better security",
+                }
+            )
 
-        return {
-            **apparmor,
-            "issues": issues
-        }
+        return {**apparmor, "issues": issues}
 
     # Try SELinux (common on RHEL/CentOS)
     selinux = check_selinux()
@@ -109,30 +102,33 @@ def analyze_mac():
         issues = []
 
         if not selinux["enabled"]:
-            issues.append({
-                "severity": "high",
-                "message": "SELinux is disabled",
-                "recommendation": "Enable SELinux for mandatory access control protection"
-            })
+            issues.append(
+                {
+                    "severity": "high",
+                    "message": "SELinux is disabled",
+                    "recommendation": "Enable SELinux for mandatory access control protection",
+                }
+            )
         elif not selinux["enforcing"]:
-            issues.append({
-                "severity": "medium",
-                "message": "SELinux is in permissive mode",
-                "recommendation": "Set SELinux to enforcing mode for active protection"
-            })
+            issues.append(
+                {
+                    "severity": "medium",
+                    "message": "SELinux is in permissive mode",
+                    "recommendation": "Set SELinux to enforcing mode for active protection",
+                }
+            )
 
-        return {
-            **selinux,
-            "issues": issues
-        }
+        return {**selinux, "issues": issues}
 
     # No MAC system detected
     return {
         "type": "none",
         "enabled": False,
-        "issues": [{
-            "severity": "high",
-            "message": "No Mandatory Access Control system detected",
-            "recommendation": "Install and enable AppArmor or SELinux for enhanced security"
-        }]
+        "issues": [
+            {
+                "severity": "high",
+                "message": "No Mandatory Access Control system detected",
+                "recommendation": "Install and enable AppArmor or SELinux for enhanced security",
+            }
+        ],
     }

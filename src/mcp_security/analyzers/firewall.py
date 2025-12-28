@@ -23,7 +23,7 @@ def analyze_ufw():
         open_ports = []
         for line in rules:
             if "ALLOW" in line:
-                match = re.search(r'(\d+)(?:/tcp)?', line)
+                match = re.search(r"(\d+)(?:/tcp)?", line)
                 if match:
                     open_ports.append(int(match.group(1)))
 
@@ -48,7 +48,13 @@ def analyze_iptables():
 
         # Check if there are any rules
         lines = output.split("\n")
-        rules_count = len([l for l in lines if l.strip() and not l.startswith("Chain") and not l.startswith("target")])
+        rules_count = len(
+            [
+                l
+                for l in lines
+                if l.strip() and not l.startswith("Chain") and not l.startswith("target")
+            ]
+        )
 
         # Simple heuristic: if many rules, likely active
         active = rules_count > 5

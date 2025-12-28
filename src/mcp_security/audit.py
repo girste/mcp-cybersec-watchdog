@@ -114,7 +114,9 @@ def run_audit(mask_data=None, verbose=False):
     return report
 
 
-def generate_security_analysis(firewall, ssh, fail2ban, threats, services, docker, updates, mac, kernel, recommendations):
+def generate_security_analysis(
+    firewall, ssh, fail2ban, threats, services, docker, updates, mac, kernel, recommendations
+):
     """Generate human-readable security analysis summary."""
     issues = []
     warnings = []
@@ -141,13 +143,19 @@ def generate_security_analysis(firewall, ssh, fail2ban, threats, services, docke
             warnings.append("Password authentication enabled - brute force attacks possible")
 
         if ssh["port"] != 22:
-            good_practices.append(f"SSH running on non-standard port {ssh['port']} reduces automated attacks")
+            good_practices.append(
+                f"SSH running on non-standard port {ssh['port']} reduces automated attacks"
+            )
 
     if threats:
         if threats["total_attempts"] > 100:
-            warnings.append(f"High number of failed login attempts ({threats['total_attempts']}) detected")
+            warnings.append(
+                f"High number of failed login attempts ({threats['total_attempts']}) detected"
+            )
         if threats["total_attempts"] > 1000:
-            suspicious.append(f"Unusually high attack volume: {threats['total_attempts']} attempts in {threats['period_days']} days")
+            suspicious.append(
+                f"Unusually high attack volume: {threats['total_attempts']} attempts in {threats['period_days']} days"
+            )
         if "ssh_brute_force" in threats.get("patterns", []):
             suspicious.append("SSH brute force attack pattern detected")
         if "distributed_attack" in threats.get("patterns", []):
@@ -155,9 +163,13 @@ def generate_security_analysis(firewall, ssh, fail2ban, threats, services, docke
 
     if services:
         if services["exposed_services"] > 10:
-            warnings.append(f"{services['exposed_services']} services exposed to internet - large attack surface")
+            warnings.append(
+                f"{services['exposed_services']} services exposed to internet - large attack surface"
+            )
         if len(services["by_category"]["risky"]) > 0:
-            issues.append(f"Database or sensitive services exposed: {', '.join([s['name'] for s in services['by_category']['risky']])}")
+            issues.append(
+                f"Database or sensitive services exposed: {', '.join([s['name'] for s in services['by_category']['risky']])}"
+            )
 
     if docker:
         if docker["installed"] and docker["running_containers"] > 0:
@@ -167,11 +179,15 @@ def generate_security_analysis(firewall, ssh, fail2ban, threats, services, docke
                 warnings.append("Docker running as root - consider rootless mode for production")
 
             if docker["privileged_containers"]:
-                issues.append(f"Privileged containers detected: {', '.join(docker['privileged_containers'])} - security risk")
+                issues.append(
+                    f"Privileged containers detected: {', '.join(docker['privileged_containers'])} - security risk"
+                )
 
     if updates:
         if updates["security_updates"] > 10:
-            issues.append(f"{updates['security_updates']} critical security updates pending - apply immediately")
+            issues.append(
+                f"{updates['security_updates']} critical security updates pending - apply immediately"
+            )
         elif updates["security_updates"] > 0:
             warnings.append(f"{updates['security_updates']} security updates available")
         else:
@@ -181,15 +197,21 @@ def generate_security_analysis(firewall, ssh, fail2ban, threats, services, docke
         if mac["enabled"]:
             good_practices.append(f"Mandatory Access Control ({mac['type']}) is enabled and active")
         else:
-            warnings.append("No MAC system (AppArmor/SELinux) detected - missing additional security layer")
+            warnings.append(
+                "No MAC system (AppArmor/SELinux) detected - missing additional security layer"
+            )
 
     if kernel:
         if kernel["hardening_percentage"] >= 80:
             good_practices.append(f"Excellent kernel hardening ({kernel['hardening_percentage']}%)")
         elif kernel["hardening_percentage"] >= 60:
-            warnings.append(f"Moderate kernel hardening ({kernel['hardening_percentage']}%) - room for improvement")
+            warnings.append(
+                f"Moderate kernel hardening ({kernel['hardening_percentage']}%) - room for improvement"
+            )
         else:
-            issues.append(f"Poor kernel hardening ({kernel['hardening_percentage']}%) - critical parameters not configured")
+            issues.append(
+                f"Poor kernel hardening ({kernel['hardening_percentage']}%) - critical parameters not configured"
+            )
 
     if fail2ban:
         if fail2ban["installed"] and fail2ban["active"]:
@@ -203,19 +225,27 @@ def generate_security_analysis(firewall, ssh, fail2ban, threats, services, docke
 
     if critical_count > 0:
         overall_status = "CRITICAL"
-        overall_summary = f"Server has {critical_count} critical security issues requiring immediate attention."
+        overall_summary = (
+            f"Server has {critical_count} critical security issues requiring immediate attention."
+        )
     elif high_count > 3:
         overall_status = "POOR"
-        overall_summary = f"Server has {high_count} high-priority security issues that should be addressed soon."
+        overall_summary = (
+            f"Server has {high_count} high-priority security issues that should be addressed soon."
+        )
     elif len(issues) > 0:
         overall_status = "NEEDS_IMPROVEMENT"
-        overall_summary = "Server has security issues that should be fixed to improve security posture."
+        overall_summary = (
+            "Server has security issues that should be fixed to improve security posture."
+        )
     elif len(warnings) > 3:
         overall_status = "FAIR"
         overall_summary = "Server security is acceptable but several improvements recommended."
     else:
         overall_status = "GOOD"
-        overall_summary = "Server follows security best practices with only minor improvements needed."
+        overall_summary = (
+            "Server follows security best practices with only minor improvements needed."
+        )
 
     return {
         "overall_status": overall_status,
@@ -228,102 +258,127 @@ def generate_security_analysis(firewall, ssh, fail2ban, threats, services, docke
             "critical_issues": critical_count,
             "high_priority_issues": high_count,
             "good_practices_followed": len(good_practices),
-            "warnings": len(warnings)
-        }
+            "warnings": len(warnings),
+        },
     }
 
 
-def generate_recommendations(firewall, ssh, fail2ban, threats, services, docker, updates, mac, kernel):
+def generate_recommendations(
+    firewall, ssh, fail2ban, threats, services, docker, updates, mac, kernel
+):
     """Generate prioritized security recommendations."""
     recommendations = []
 
     if firewall:
         if not firewall["active"]:
-            recommendations.append({
-                "priority": "critical",
-                "title": "Enable firewall",
-                "description": "No active firewall detected. Install and enable ufw or firewalld.",
-                "command": "sudo ufw enable"
-            })
+            recommendations.append(
+                {
+                    "priority": "critical",
+                    "title": "Enable firewall",
+                    "description": "No active firewall detected. Install and enable ufw or firewalld.",
+                    "command": "sudo ufw enable",
+                }
+            )
         elif firewall["default_policy"] != "deny":
-            recommendations.append({
-                "priority": "high",
-                "title": "Set restrictive firewall policy",
-                "description": "Default policy should deny incoming connections.",
-                "command": "sudo ufw default deny incoming"
-            })
+            recommendations.append(
+                {
+                    "priority": "high",
+                    "title": "Set restrictive firewall policy",
+                    "description": "Default policy should deny incoming connections.",
+                    "command": "sudo ufw default deny incoming",
+                }
+            )
 
     if ssh:
         for issue in ssh.get("issues", []):
-            recommendations.append({
-                "priority": issue["severity"],
-                "title": issue["message"],
-                "description": issue["recommendation"],
-                "command": None
-            })
+            recommendations.append(
+                {
+                    "priority": issue["severity"],
+                    "title": issue["message"],
+                    "description": issue["recommendation"],
+                    "command": None,
+                }
+            )
 
     if fail2ban and threats:
         if not fail2ban["installed"] and threats["total_attempts"] > 50:
-            recommendations.append({
-                "priority": "medium",
-                "title": "Install fail2ban",
-                "description": f"Detected {threats['total_attempts']} failed login attempts. Fail2ban can auto-ban attackers.",
-                "command": "sudo apt install fail2ban"
-            })
+            recommendations.append(
+                {
+                    "priority": "medium",
+                    "title": "Install fail2ban",
+                    "description": f"Detected {threats['total_attempts']} failed login attempts. Fail2ban can auto-ban attackers.",
+                    "command": "sudo apt install fail2ban",
+                }
+            )
 
     if threats:
         if threats["total_attempts"] > 1000:
-            recommendations.append({
-                "priority": "medium",
-                "title": "High number of attack attempts",
-                "description": f"{threats['total_attempts']} failed logins in {threats['period_days']} days. Consider stricter policies.",
-                "command": None
-            })
+            recommendations.append(
+                {
+                    "priority": "medium",
+                    "title": "High number of attack attempts",
+                    "description": f"{threats['total_attempts']} failed logins in {threats['period_days']} days. Consider stricter policies.",
+                    "command": None,
+                }
+            )
 
     if services:
         for issue in services.get("issues", []):
-            recommendations.append({
-                "priority": issue["severity"],
-                "title": issue["message"],
-                "description": issue["recommendation"],
-                "command": None
-            })
+            recommendations.append(
+                {
+                    "priority": issue["severity"],
+                    "title": issue["message"],
+                    "description": issue["recommendation"],
+                    "command": None,
+                }
+            )
 
     if docker:
         for issue in docker.get("issues", []):
-            recommendations.append({
-                "priority": issue["severity"],
-                "title": issue["message"],
-                "description": issue["recommendation"],
-                "command": None
-            })
+            recommendations.append(
+                {
+                    "priority": issue["severity"],
+                    "title": issue["message"],
+                    "description": issue["recommendation"],
+                    "command": None,
+                }
+            )
 
     if updates:
         for issue in updates.get("issues", []):
-            recommendations.append({
-                "priority": issue["severity"],
-                "title": issue["message"],
-                "description": issue["recommendation"],
-                "command": None
-            })
+            recommendations.append(
+                {
+                    "priority": issue["severity"],
+                    "title": issue["message"],
+                    "description": issue["recommendation"],
+                    "command": None,
+                }
+            )
 
     if mac:
         for issue in mac.get("issues", []):
-            recommendations.append({
-                "priority": issue["severity"],
-                "title": issue["message"],
-                "description": issue["recommendation"],
-                "command": None
-            })
+            recommendations.append(
+                {
+                    "priority": issue["severity"],
+                    "title": issue["message"],
+                    "description": issue["recommendation"],
+                    "command": None,
+                }
+            )
 
     if kernel:
-        kernel_issues = sorted(kernel.get("issues", []), key=lambda x: {"critical": 0, "high": 1, "medium": 2, "low": 3}.get(x["severity"], 4))
+        kernel_issues = sorted(
+            kernel.get("issues", []),
+            key=lambda x: {"critical": 0, "high": 1, "medium": 2, "low": 3}.get(x["severity"], 4),
+        )
         for issue in kernel_issues[:3]:
-            recommendations.append({
-                "priority": issue["severity"],
-                "title": issue["message"],
-                "description": issue["recommendation"],
-                "command": None
-            })
+            recommendations.append(
+                {
+                    "priority": issue["severity"],
+                    "title": issue["message"],
+                    "description": issue["recommendation"],
+                    "command": None,
+                }
+            )
 
     return recommendations

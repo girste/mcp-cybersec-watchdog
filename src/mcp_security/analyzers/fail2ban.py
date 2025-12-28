@@ -12,9 +12,9 @@ def get_fail2ban_status():
 
         # Extract jail list
         jails = []
-        jail_match = re.search(r'Jail list:\s+(.*)', result.stdout)
+        jail_match = re.search(r"Jail list:\s+(.*)", result.stdout)
         if jail_match:
-            jails = [j.strip() for j in jail_match.group(1).split(',')]
+            jails = [j.strip() for j in jail_match.group(1).split(",")]
 
         return {
             "active": True,
@@ -33,7 +33,7 @@ def get_jail_status(jail_name):
         output = result.stdout
 
         # Extract banned IPs count
-        banned_match = re.search(r'Currently banned:\s*(\d+)', output)
+        banned_match = re.search(r"Currently banned:\s*(\d+)", output)
         banned_count = int(banned_match.group(1)) if banned_match else 0
 
         return {

@@ -13,9 +13,9 @@ def parse_listening_ports():
 
     services = []
 
-    for line in result.stdout.split('\n'):
+    for line in result.stdout.split("\n"):
         # Skip header and empty lines
-        if not line or line.startswith('Netid') or line.startswith('State'):
+        if not line or line.startswith("Netid") or line.startswith("State"):
             continue
 
         # Parse ss output: protocol state recv-q send-q local_address:port peer_address:port process
@@ -27,21 +27,21 @@ def parse_listening_ports():
         local_addr = parts[4]  # address:port
 
         # Extract port
-        port_match = re.search(r':(\d+)$', local_addr)
+        port_match = re.search(r":(\d+)$", local_addr)
         if not port_match:
             continue
 
         port = int(port_match.group(1))
 
         # Extract bind address
-        addr = local_addr.rsplit(':', 1)[0]
+        addr = local_addr.rsplit(":", 1)[0]
         # Handle IPv6 addresses in brackets
-        addr = addr.strip('[]')
+        addr = addr.strip("[]")
         # Remove interface suffix (e.g., %lo, %eth0)
-        base_addr = addr.split('%')[0]
+        base_addr = addr.split("%")[0]
 
         # Determine if exposed to external network
-        is_external = base_addr not in ('127.0.0.1', '::1', '127.0.0.53', '127.0.0.54', 'localhost')
+        is_external = base_addr not in ("127.0.0.1", "::1", "127.0.0.53", "127.0.0.54", "localhost")
 
         # Extract process info if available
         process = None
@@ -52,13 +52,15 @@ def parse_listening_ports():
             if proc_match:
                 process = proc_match.group(1)
 
-        services.append({
-            "port": port,
-            "protocol": protocol,
-            "address": addr,
-            "exposed": is_external,
-            "process": process
-        })
+        services.append(
+            {
+                "port": port,
+                "protocol": protocol,
+                "address": addr,
+                "exposed": is_external,
+                "process": process,
+            }
+        )
 
     return services
 
@@ -82,11 +84,7 @@ def categorize_services(services):
         9200: "elasticsearch",
     }
 
-    categorized = {
-        "safe": [],
-        "risky": [],
-        "unknown": []
-    }
+    categorized = {"safe": [], "risky": [], "unknown": []}
 
     for service in services:
         port = service["port"]
@@ -110,12 +108,8 @@ def analyze_services():
             "total_services": 0,
             "exposed_services": 0,
             "internal_only": 0,
-            "by_category": {
-                "safe": [],
-                "risky": [],
-                "unknown": []
-            },
-            "issues": []
+            "by_category": {"safe": [], "risky": [], "unknown": []},
+            "issues": [],
         }
 
     # Categorize services
@@ -131,25 +125,29 @@ def analyze_services():
     # Check for exposed risky services
     for service in categorized["risky"]:
         if service["exposed"]:
-            issues.append({
-                "severity": "high",
-                "message": f"Database service {service['name']} exposed on port {service['port']}",
-                "recommendation": f"Bind {service['name']} to localhost only or use firewall to restrict access"
-            })
+            issues.append(
+                {
+                    "severity": "high",
+                    "message": f"Database service {service['name']} exposed on port {service['port']}",
+                    "recommendation": f"Bind {service['name']} to localhost only or use firewall to restrict access",
+                }
+            )
 
     # Check for unknown exposed services
     exposed_unknown = [s for s in categorized["unknown"] if s["exposed"]]
     if len(exposed_unknown) > 3:
-        issues.append({
-            "severity": "medium",
-            "message": f"{len(exposed_unknown)} unknown services exposed to network",
-            "recommendation": "Review and identify all exposed services, close unnecessary ports"
-        })
+        issues.append(
+            {
+                "severity": "medium",
+                "message": f"{len(exposed_unknown)} unknown services exposed to network",
+                "recommendation": "Review and identify all exposed services, close unnecessary ports",
+            }
+        )
 
     return {
         "total_services": len(services),
         "exposed_services": exposed_count,
         "internal_only": internal_count,
         "by_category": categorized,
-        "issues": issues
+        "issues": issues,
     }

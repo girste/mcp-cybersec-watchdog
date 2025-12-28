@@ -25,7 +25,7 @@ def parse_sshd_config(config_path="/etc/ssh/sshd_config"):
 
                 # Port
                 if line_lower.startswith("port "):
-                    match = re.search(r'(\d+)', line)
+                    match = re.search(r"(\d+)", line)
                     if match:
                         config["port"] = int(match.group(1))
 
@@ -59,25 +59,31 @@ def analyze_ssh():
     issues = []
 
     if config["permit_root_login"] == "yes":
-        issues.append({
-            "severity": "high",
-            "message": "Root login is enabled",
-            "recommendation": "Set 'PermitRootLogin no' in sshd_config"
-        })
+        issues.append(
+            {
+                "severity": "high",
+                "message": "Root login is enabled",
+                "recommendation": "Set 'PermitRootLogin no' in sshd_config",
+            }
+        )
 
     if config["password_auth"] == "yes":
-        issues.append({
-            "severity": "medium",
-            "message": "Password authentication is enabled",
-            "recommendation": "Consider disabling password auth and using keys only"
-        })
+        issues.append(
+            {
+                "severity": "medium",
+                "message": "Password authentication is enabled",
+                "recommendation": "Consider disabling password auth and using keys only",
+            }
+        )
 
     if config["port"] == 22:
-        issues.append({
-            "severity": "low",
-            "message": "SSH is on default port 22",
-            "recommendation": "Consider using a non-standard port to reduce automated attacks"
-        })
+        issues.append(
+            {
+                "severity": "low",
+                "message": "SSH is on default port 22",
+                "recommendation": "Consider using a non-standard port to reduce automated attacks",
+            }
+        )
 
     return {
         **config,

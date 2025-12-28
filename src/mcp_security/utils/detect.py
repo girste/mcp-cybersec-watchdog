@@ -50,9 +50,7 @@ def detect_firewall():
 
     for name, cmd in checks:
         try:
-            result = subprocess.run(
-                cmd, capture_output=True, text=True, timeout=5
-            )
+            result = subprocess.run(cmd, capture_output=True, text=True, timeout=5)
             if result.returncode == 0:
                 return name
         except (FileNotFoundError, subprocess.TimeoutExpired):
@@ -64,11 +62,7 @@ def detect_firewall():
 def has_sudo():
     """Check if current user has sudo access."""
     try:
-        result = subprocess.run(
-            ["sudo", "-n", "true"],
-            capture_output=True,
-            timeout=2
-        )
+        result = subprocess.run(["sudo", "-n", "true"], capture_output=True, timeout=2)
         return result.returncode == 0
     except (FileNotFoundError, subprocess.TimeoutExpired):
         return False
@@ -77,11 +71,7 @@ def has_sudo():
 def is_fail2ban_installed():
     """Check if fail2ban is installed and accessible."""
     try:
-        result = subprocess.run(
-            ["fail2ban-client", "version"],
-            capture_output=True,
-            timeout=2
-        )
+        result = subprocess.run(["fail2ban-client", "version"], capture_output=True, timeout=2)
         return result.returncode == 0
     except (FileNotFoundError, subprocess.TimeoutExpired):
         return False
@@ -96,12 +86,7 @@ def run_with_sudo(cmd, timeout=5):
     """
     try:
         # Try without sudo first
-        result = subprocess.run(
-            cmd,
-            capture_output=True,
-            text=True,
-            timeout=timeout
-        )
+        result = subprocess.run(cmd, capture_output=True, text=True, timeout=timeout)
 
         # If successful, return result
         if result.returncode == 0:
@@ -109,13 +94,13 @@ def run_with_sudo(cmd, timeout=5):
 
         # Check if error is permission-related
         stderr_lower = result.stderr.lower()
-        if any(keyword in stderr_lower for keyword in ['permission denied', 'you must be root', 'you need to be root']):
+        if any(
+            keyword in stderr_lower
+            for keyword in ["permission denied", "you must be root", "you need to be root"]
+        ):
             # Try with sudo
             result = subprocess.run(
-                ["sudo", "-n"] + cmd,
-                capture_output=True,
-                text=True,
-                timeout=timeout
+                ["sudo", "-n"] + cmd, capture_output=True, text=True, timeout=timeout
             )
             return result if result.returncode == 0 else None
 

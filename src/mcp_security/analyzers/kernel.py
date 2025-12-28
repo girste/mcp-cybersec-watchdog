@@ -15,13 +15,11 @@ SECURITY_PARAMS = {
     "net.ipv4.conf.all.rp_filter": {"expected": "1", "severity": "medium"},
     "net.ipv4.conf.default.rp_filter": {"expected": "1", "severity": "medium"},
     "net.ipv4.tcp_syncookies": {"expected": "1", "severity": "medium"},
-
     # Kernel hardening
     "kernel.dmesg_restrict": {"expected": "1", "severity": "low"},
     "kernel.kptr_restrict": {"expected": "2", "severity": "medium"},
     "kernel.yama.ptrace_scope": {"expected": "1", "severity": "medium"},
     "kernel.kexec_load_disabled": {"expected": "1", "severity": "low"},
-
     # Filesystem security
     "fs.protected_hardlinks": {"expected": "1", "severity": "medium"},
     "fs.protected_symlinks": {"expected": "1", "severity": "medium"},
@@ -54,18 +52,16 @@ def analyze_kernel():
         expected = config["expected"]
         is_secure = current_value == expected
 
-        params_status[param] = {
-            "current": current_value,
-            "expected": expected,
-            "secure": is_secure
-        }
+        params_status[param] = {"current": current_value, "expected": expected, "secure": is_secure}
 
         if not is_secure:
-            issues.append({
-                "severity": config["severity"],
-                "message": f"Insecure kernel parameter: {param}={current_value}",
-                "recommendation": f"Set {param}={expected} in /etc/sysctl.conf or /etc/sysctl.d/"
-            })
+            issues.append(
+                {
+                    "severity": config["severity"],
+                    "message": f"Insecure kernel parameter: {param}={current_value}",
+                    "recommendation": f"Set {param}={expected} in /etc/sysctl.conf or /etc/sysctl.d/",
+                }
+            )
 
     # Calculate security score
     total_params = len(params_status)
@@ -78,5 +74,5 @@ def analyze_kernel():
         "secure_params": secure_params,
         "hardening_percentage": round(hardening_percentage, 1),
         "parameters": params_status,
-        "issues": issues
+        "issues": issues,
     }

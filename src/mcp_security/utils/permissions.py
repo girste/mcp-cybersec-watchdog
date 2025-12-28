@@ -25,7 +25,7 @@ def check_sudo_permissions():
                 ["sudo", "-n"] + cmd,
                 stdout=subprocess.DEVNULL,
                 stderr=subprocess.DEVNULL,
-                timeout=2
+                timeout=2,
             )
             if result.returncode != 0:
                 missing.append(description)

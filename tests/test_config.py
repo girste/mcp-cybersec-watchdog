@@ -23,12 +23,13 @@ def test_custom_config():
         "threat_analysis_days": 14,
     }
 
-    with tempfile.NamedTemporaryFile(mode='w', suffix='.json', delete=False) as f:
+    with tempfile.NamedTemporaryFile(mode="w", suffix=".json", delete=False) as f:
         json.dump(custom_config, f)
         config_path = Path(f.name)
 
     try:
         import os
+
         old_cwd = os.getcwd()
         os.chdir(config_path.parent)
 

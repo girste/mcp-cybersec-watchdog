@@ -22,17 +22,17 @@ async def list_tools() -> list[Tool]:
         Tool(
             name="security_audit",
             description="Run comprehensive cybersecurity audit of the Linux server. "
-                       "Analyzes: firewall (ufw/iptables/firewalld), SSH configuration, "
-                       "threat patterns, fail2ban, network services/open ports, Docker security, "
-                       "security updates, MAC (AppArmor/SELinux), and kernel hardening. "
-                       "Returns detailed JSON report with security score and actionable recommendations.",
+            "Analyzes: firewall (ufw/iptables/firewalld), SSH configuration, "
+            "threat patterns, fail2ban, network services/open ports, Docker security, "
+            "security updates, MAC (AppArmor/SELinux), and kernel hardening. "
+            "Returns detailed JSON report with security score and actionable recommendations.",
             inputSchema={
                 "type": "object",
                 "properties": {
                     "mask_data": {
                         "type": "boolean",
                         "description": "Mask sensitive data like IPs and hostname (default: true)",
-                        "default": True
+                        "default": True,
                     }
                 },
             },
@@ -51,21 +51,15 @@ async def call_tool(name: str, arguments: Any) -> list[TextContent]:
     try:
         report = run_audit(mask_data=mask_data)
 
-        return [
-            TextContent(
-                type="text",
-                text=json.dumps(report, indent=2)
-            )
-        ]
+        return [TextContent(type="text", text=json.dumps(report, indent=2))]
 
     except Exception as e:
         return [
             TextContent(
                 type="text",
-                text=json.dumps({
-                    "error": str(e),
-                    "message": "Failed to run security audit"
-                }, indent=2)
+                text=json.dumps(
+                    {"error": str(e), "message": "Failed to run security audit"}, indent=2
+                ),
             )
         ]
 
@@ -73,23 +67,21 @@ async def call_tool(name: str, arguments: Any) -> list[TextContent]:
 async def main():
     """Run MCP server."""
     async with stdio_server() as (read_stream, write_stream):
-        await app.run(
-            read_stream,
-            write_stream,
-            app.create_initialization_options()
-        )
+        await app.run(read_stream, write_stream, app.create_initialization_options())
 
 
 def cli_main():
     """CLI entry point for testing."""
     if len(sys.argv) > 1 and sys.argv[1] == "test":
         from .utils.permissions import check_and_warn
+
         print("Running security audit...")
         check_and_warn()
         report = run_audit(mask_data=True, verbose=True)
         print("\n" + json.dumps(report, indent=2))
     else:
         import asyncio
+
         asyncio.run(main())
 
 

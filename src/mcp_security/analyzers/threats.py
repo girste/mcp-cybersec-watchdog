@@ -13,7 +13,7 @@ def parse_failed_ssh_attempts(log_path, days=7):
     attempts = []
 
     # Pattern: "Failed password for ... from IP"
-    pattern = re.compile(r'Failed password for .* from ([\d.]+)')
+    pattern = re.compile(r"Failed password for .* from ([\d.]+)")
 
     # Try reading file directly first
     try:
@@ -29,7 +29,7 @@ def parse_failed_ssh_attempts(log_path, days=7):
         # Try with sudo
         result = run_with_sudo(["cat", log_path])
         if result:
-            for line in result.stdout.split('\n'):
+            for line in result.stdout.split("\n"):
                 match = pattern.search(line)
                 if match:
                     ip = match.group(1)
@@ -59,10 +59,7 @@ def analyze_threats(log_path, days=7):
     unique = len(ip_counter)
 
     # Top 10 attackers
-    top_attackers = [
-        {"ip": ip, "attempts": count}
-        for ip, count in ip_counter.most_common(10)
-    ]
+    top_attackers = [{"ip": ip, "attempts": count} for ip, count in ip_counter.most_common(10)]
 
     # Detect patterns
     patterns = []
