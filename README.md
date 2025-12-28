@@ -4,6 +4,8 @@
 
 Get a **complete security audit in 30 seconds**. Analyzes firewall, SSH, threats, fail2ban, Docker, kernel hardening and more. Returns actionable recommendations with zero configuration.
 
+**🚀 NEW: Live Monitoring Mode (Beta)** - Continuous security monitoring with baseline tracking, anomaly detection, and AI-powered alerts. Set it and forget it.
+
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
 [![Tests](https://github.com/girste/mcp-cybersec-watchdog/actions/workflows/test.yml/badge.svg)](https://github.com/girste/mcp-cybersec-watchdog/actions/workflows/test.yml)
@@ -21,12 +23,26 @@ Security audits are tedious. This tool gives you:
 
 ## Features
 
+### Security Auditing
 ✅ **Firewall Analysis** - Detects and analyzes ufw, iptables, or firewalld
 ✅ **SSH Hardening Check** - Validates sshd_config security settings
 ✅ **Threat Intelligence** - Analyzes failed login attempts and patterns
 ✅ **Fail2ban Integration** - Reports jail status and banned IPs
+✅ **Docker Security** - Container analysis and rootless mode detection
+✅ **Kernel Hardening** - Validates 16+ sysctl parameters
+✅ **MAC (AppArmor/SELinux)** - Mandatory Access Control status
+
+### Live Monitoring (Beta)
+🆕 **Baseline Tracking** - Automatic security state baseline on first run
+🆕 **Anomaly Detection** - Detects firewall changes, new ports, SSH config changes, attack spikes
+🆕 **Smart Alerts** - AI analysis triggered ONLY when anomalies detected (saves tokens!)
+🆕 **Auto-cleanup** - Automatic log rotation to prevent disk fill
+🆕 **Daemon Mode** - Runs in background, checks every 5min-24h (configurable)
+
+### General
 ✅ **Privacy Masking** - Automatically masks sensitive data
 ✅ **Cross-distro** - Works on Debian, Ubuntu, RHEL, CentOS
+✅ **Zero Configuration** - Works out of the box
 
 ## Quick Start
 
@@ -113,19 +129,35 @@ The tool will return a comprehensive JSON report with all security findings.
 
 ### MCP Tools
 
-The server exposes two tools to Claude:
+The server exposes these tools to Claude:
 
 **1. `security_audit`** - One-time comprehensive security audit
 ```
 Run a security audit on this server
 ```
 
-**2. `analyze_anomaly`** - AI-powered anomaly analysis (token-efficient!)
+**2. `start_monitoring`** - Start live monitoring daemon (Beta)
 ```
-Analyze the anomaly in /var/log/mcp-watchdog/anomaly_20251228_123456.json
+Start security monitoring with 1 hour interval
+```
+Parameters: `interval_seconds` (300-86400, default: 3600)
+
+**3. `stop_monitoring`** - Stop live monitoring daemon
+```
+Stop the security monitoring daemon
 ```
 
-This tool is automatically suggested when monitoring detects anomalies. It provides deep AI insights only when needed, saving tokens during normal operations.
+**4. `monitoring_status`** - Check monitoring status
+```
+Show monitoring status and recent alerts
+```
+
+**5. `analyze_anomaly`** - AI-powered anomaly analysis (token-efficient!)
+```
+Analyze the latest security anomaly
+```
+
+The monitoring tools run in background and only trigger AI analysis when anomalies are detected, saving tokens during normal operations.
 
 ## Example Output
 
@@ -272,11 +304,12 @@ MIT License - see [LICENSE](LICENSE) file for details
 
 ## Roadmap
 
+- [x] **Continuous monitoring mode** ✅ (Beta - available now!)
 - [ ] CVE scanning for installed packages
 - [ ] SSL certificate expiration checks
-- [ ] Continuous monitoring mode
 - [ ] HTML/PDF report export
 - [ ] CIS benchmark compliance checks
+- [ ] Historical trend analysis and graphs
 
 ## Author
 
