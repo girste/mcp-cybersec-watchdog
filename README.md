@@ -120,18 +120,30 @@ The tool will return a comprehensive JSON report with all security findings.
 }
 ```
 
+## Configuration
+
+Optional config file (`.mcp-security.json` in current dir or home):
+
+```json
+{
+  "checks": {
+    "docker": false,
+    "updates": false
+  },
+  "threat_analysis_days": 14,
+  "mask_data": false
+}
+```
+
+Disable specific checks or customize analysis period. All checks enabled by default.
+
 ## Privacy
 
 By default, the tool **masks sensitive data**:
 - IP addresses: `91.99.***.***`
 - Hostnames: `srv-ab**`
 
-To get full unmasked data:
-
-```python
-# When calling via MCP
-{"mask_data": false}
-```
+Disable masking via config file or MCP parameter `{"mask_data": false}`
 
 ## Requirements
 
@@ -141,18 +153,18 @@ To get full unmasked data:
 
 ### Sudo Configuration
 
-The tool needs sudo access for:
+The tool auto-detects missing permissions and warns you with setup instructions. It needs sudo access for:
 - **Firewall analysis**: `ufw`, `iptables`, `firewalld`
 - **Fail2ban status**: `fail2ban-client`
 - **Log analysis**: `/var/log/auth.log`
 
-Run the setup script to configure passwordless sudo for these specific commands:
+Setup passwordless sudo for these specific commands:
 
 ```bash
 ./setup-sudo.sh
 ```
 
-This creates `/etc/sudoers.d/mcp-security` with minimal permissions for security audit commands only.
+Creates `/etc/sudoers.d/mcp-security` with minimal permissions. The tool continues with limited analysis if sudo is not configured.
 
 ## What Gets Analyzed
 
@@ -186,15 +198,17 @@ This creates `/etc/sudoers.d/mcp-security` with minimal permissions for security
 git clone https://github.com/girste/mcp-cybersec-watchdog
 cd mcp-cybersec-watchdog
 
-# Install in dev mode
-pip install -e .
+# Install with dev dependencies
+pip install -e ".[dev]"
 
 # Run tests
-pytest
+pytest tests/ -v
 
-# Run standalone test
-python3 test_audit.py
+# Test standalone
+mcp-watchdog test
 ```
+
+CI runs automatically on push via GitHub Actions (Python 3.10/3.11/3.12).
 
 ## Contributing
 
@@ -213,7 +227,6 @@ MIT License - see [LICENSE](LICENSE) file for details
 
 - [ ] CVE scanning for installed packages
 - [ ] SSL certificate expiration checks
-- [ ] Docker container security analysis
 - [ ] Continuous monitoring mode
 - [ ] HTML/PDF report export
 - [ ] CIS benchmark compliance checks

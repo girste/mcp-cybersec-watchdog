@@ -83,11 +83,12 @@ async def main():
 def cli_main():
     """CLI entry point for testing."""
     if len(sys.argv) > 1 and sys.argv[1] == "test":
-        # Direct test mode (no MCP)
-        report = run_audit(mask_data=True)
-        print(json.dumps(report, indent=2))
+        from .utils.permissions import check_and_warn
+        print("Running security audit...")
+        check_and_warn()
+        report = run_audit(mask_data=True, verbose=True)
+        print("\n" + json.dumps(report, indent=2))
     else:
-        # Normal MCP server mode
         import asyncio
         asyncio.run(main())
 

@@ -8,7 +8,7 @@ version = "0.1.0"
 description = "Cybersecurity monitoring and analysis for Linux servers via MCP"
 readme = "README.md"
 requires-python = ">=3.10"
-license = {text = "MIT"}
+license = "MIT"
 authors = [
     {name = "Girste", email = "me@girste.com"}
 ]
@@ -16,7 +16,6 @@ keywords = ["mcp", "security", "audit", "linux", "server"]
 classifiers = [
     "Development Status :: 3 - Alpha",
     "Intended Audience :: System Administrators",
-    "License :: OSI Approved :: MIT License",
     "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
@@ -36,6 +35,15 @@ dev = [
 
 [project.scripts]
 mcp-watchdog = "mcp_security.server:cli_main"
+
+[tool.setuptools]
+package-dir = {"" = "src"}
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+"*" = ["*.sh"]
 
 [project.urls]
 Homepage = "https://github.com/girste/mcp-cybersec-watchdog"
