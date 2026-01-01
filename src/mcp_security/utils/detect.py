@@ -4,6 +4,12 @@ import os
 import platform
 import subprocess
 
+from ..constants import (
+    TIMEOUT_SHORT,
+    PATH_AUTH_LOG_DEBIAN,
+    PATH_AUTH_LOG_RHEL,
+)
+
 
 def get_distro():
     """Detect Linux distribution."""
@@ -31,11 +37,11 @@ def get_auth_log_path():
     distro = get_distro()
 
     if distro in ("debian", "arch"):
-        path = "/var/log/auth.log"
+        path = PATH_AUTH_LOG_DEBIAN
     elif distro == "rhel":
-        path = "/var/log/secure"
+        path = PATH_AUTH_LOG_RHEL
     else:
-        path = "/var/log/auth.log"
+        path = PATH_AUTH_LOG_DEBIAN
 
     return path if os.path.exists(path) else None
 
@@ -62,7 +68,7 @@ def detect_firewall():
 def has_sudo():
     """Check if current user has sudo access."""
     try:
-        result = subprocess.run(["sudo", "-n", "true"], capture_output=True, timeout=2)
+        result = subprocess.run(["sudo", "-n", "true"], capture_output=True, timeout=TIMEOUT_SHORT)
         return result.returncode == 0
     except (FileNotFoundError, subprocess.TimeoutExpired):
         return False
@@ -71,13 +77,15 @@ def has_sudo():
 def is_fail2ban_installed():
     """Check if fail2ban is installed and accessible."""
     try:
-        result = subprocess.run(["fail2ban-client", "version"], capture_output=True, timeout=2)
+        result = subprocess.run(
+            ["fail2ban-client", "version"], capture_output=True, timeout=TIMEOUT_SHORT
+        )
         return result.returncode == 0
     except (FileNotFoundError, subprocess.TimeoutExpired):
         return False
 
 
-def run_with_sudo(cmd, timeout=5):
+def run_with_sudo(cmd, timeout=TIMEOUT_SHORT):
     """
     Run command with automatic sudo fallback.
 

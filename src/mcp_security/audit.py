@@ -1,6 +1,7 @@
 """Main security audit orchestrator."""
 
 from datetime import datetime, timezone
+from typing import List, Dict, Any, Optional
 
 from .analyzers.firewall import analyze_firewall
 from .analyzers.ssh import analyze_ssh
@@ -25,6 +26,51 @@ from .analyzers.users import analyze_users
 from .utils.detect import get_os_info, get_auth_log_path
 from .utils.privacy import mask_ip, get_masked_hostname
 from .utils.config import load_config
+from .constants import MAX_KERNEL_ISSUES_REPORT
+
+
+# Helper functions for reducing code repetition
+def _collect_issues_from_analyzer(
+    analyzer_result: Optional[Dict[str, Any]],
+) -> List[Dict[str, str]]:
+    """Extract issues list from analyzer result if present."""
+    if not analyzer_result:
+        return []
+    return analyzer_result.get("issues", [])
+
+
+def _add_issues_to_recommendations(
+    recommendations: List[Dict[str, Any]], issues: List[Dict[str, str]]
+) -> None:
+    """Add analyzer issues to recommendations list."""
+    for issue in issues:
+        recommendations.append(
+            {
+                "priority": issue["severity"],
+                "title": issue["message"],
+                "description": issue["recommendation"],
+                "command": None,
+            }
+        )
+
+
+def _add_issues_to_recommendations_prioritized(
+    recommendations: List[Dict[str, Any]],
+    issues: List[Dict[str, str]],
+    insert_at_front: bool = False,
+) -> None:
+    """Add analyzer issues to recommendations list, optionally at front for high priority."""
+    for issue in issues:
+        rec = {
+            "priority": issue["severity"],
+            "title": issue["message"],
+            "description": issue["recommendation"],
+            "command": None,
+        }
+        if insert_at_front:
+            recommendations.insert(0, rec)
+        else:
+            recommendations.append(rec)
 
 
 def run_audit(mask_data=None, verbose=False):
@@ -557,6 +603,7 @@ def generate_recommendations(
     """Generate prioritized security recommendations."""
     recommendations = []
 
+    # Handle firewall-specific recommendations
     if firewall:
         if not firewall["active"]:
             recommendations.append(
@@ -577,17 +624,7 @@ def generate_recommendations(
                 }
             )
 
-    if ssh:
-        for issue in ssh.get("issues", []):
-            recommendations.append(
-                {
-                    "priority": issue["severity"],
-                    "title": issue["message"],
-                    "description": issue["recommendation"],
-                    "command": None,
-                }
-            )
-
+    # Handle fail2ban/threats-specific recommendations
     if fail2ban and threats:
         if not fail2ban["installed"] and threats["total_attempts"] > 50:
             recommendations.append(
@@ -599,199 +636,47 @@ def generate_recommendations(
                 }
             )
 
-    if threats:
-        if threats["total_attempts"] > 1000:
-            recommendations.append(
-                {
-                    "priority": "medium",
-                    "title": "High number of attack attempts",
-                    "description": f"{threats['total_attempts']} failed logins in {threats['period_days']} days. Consider stricter policies.",
-                    "command": None,
-                }
-            )
+    if threats and threats["total_attempts"] > 1000:
+        recommendations.append(
+            {
+                "priority": "medium",
+                "title": "High number of attack attempts",
+                "description": f"{threats['total_attempts']} failed logins in {threats['period_days']} days. Consider stricter policies.",
+                "command": None,
+            }
+        )
 
-    if services:
-        for issue in services.get("issues", []):
-            recommendations.append(
-                {
-                    "priority": issue["severity"],
-                    "title": issue["message"],
-                    "description": issue["recommendation"],
-                    "command": None,
-                }
-            )
+    # High-priority issues that should appear first (CVE, containers, PCI, users)
+    high_priority_analyzers = [cve, containers, pci, users]
+    for analyzer in high_priority_analyzers:
+        issues = _collect_issues_from_analyzer(analyzer)
+        _add_issues_to_recommendations_prioritized(recommendations, issues, insert_at_front=True)
 
-    if docker:
-        for issue in docker.get("issues", []):
-            recommendations.append(
-                {
-                    "priority": issue["severity"],
-                    "title": issue["message"],
-                    "description": issue["recommendation"],
-                    "command": None,
-                }
-            )
+    # Standard analyzers - append in order
+    standard_analyzers = [
+        ssh,
+        services,
+        docker,
+        updates,
+        mac,
+        ssl,
+        disk,
+        cis,
+        nist,
+        webheaders,
+        filesystem,
+        network,
+    ]
+    for analyzer in standard_analyzers:
+        issues = _collect_issues_from_analyzer(analyzer)
+        _add_issues_to_recommendations(recommendations, issues)
 
-    if updates:
-        for issue in updates.get("issues", []):
-            recommendations.append(
-                {
-                    "priority": issue["severity"],
-                    "title": issue["message"],
-                    "description": issue["recommendation"],
-                    "command": None,
-                }
-            )
-
-    if mac:
-        for issue in mac.get("issues", []):
-            recommendations.append(
-                {
-                    "priority": issue["severity"],
-                    "title": issue["message"],
-                    "description": issue["recommendation"],
-                    "command": None,
-                }
-            )
-
+    # Kernel needs special handling (sort by severity, limit to top issues)
     if kernel:
         kernel_issues = sorted(
             kernel.get("issues", []),
             key=lambda x: {"critical": 0, "high": 1, "medium": 2, "low": 3}.get(x["severity"], 4),
         )
-        for issue in kernel_issues[:3]:
-            recommendations.append(
-                {
-                    "priority": issue["severity"],
-                    "title": issue["message"],
-                    "description": issue["recommendation"],
-                    "command": None,
-                }
-            )
-
-    if ssl:
-        for issue in ssl.get("issues", []):
-            recommendations.append(
-                {
-                    "priority": issue["severity"],
-                    "title": issue["message"],
-                    "description": issue["recommendation"],
-                    "command": None,
-                }
-            )
-
-    if disk:
-        for issue in disk.get("issues", []):
-            recommendations.append(
-                {
-                    "priority": issue["severity"],
-                    "title": issue["message"],
-                    "description": issue["recommendation"],
-                    "command": None,
-                }
-            )
-
-    if cve:
-        for issue in cve.get("issues", []):
-            recommendations.insert(
-                0,
-                {
-                    "priority": issue["severity"],
-                    "title": issue["message"],
-                    "description": issue["recommendation"],
-                    "command": None,
-                },
-            )
-
-    if cis:
-        for issue in cis.get("issues", []):
-            recommendations.append(
-                {
-                    "priority": issue["severity"],
-                    "title": issue["message"],
-                    "description": issue["recommendation"],
-                    "command": None,
-                }
-            )
-
-    if containers:
-        for issue in containers.get("issues", []):
-            recommendations.insert(
-                0,
-                {
-                    "priority": issue["severity"],
-                    "title": issue["message"],
-                    "description": issue["recommendation"],
-                    "command": None,
-                },
-            )
-
-    if nist:
-        for issue in nist.get("issues", []):
-            recommendations.append(
-                {
-                    "priority": issue["severity"],
-                    "title": issue["message"],
-                    "description": issue["recommendation"],
-                    "command": None,
-                }
-            )
-
-    if pci:
-        for issue in pci.get("issues", []):
-            recommendations.insert(
-                0,
-                {
-                    "priority": issue["severity"],
-                    "title": issue["message"],
-                    "description": issue["recommendation"],
-                    "command": None,
-                },
-            )
-
-    if webheaders:
-        for issue in webheaders.get("issues", []):
-            recommendations.append(
-                {
-                    "priority": issue["severity"],
-                    "title": issue["message"],
-                    "description": issue["recommendation"],
-                    "command": None,
-                }
-            )
-
-    if filesystem:
-        for issue in filesystem.get("issues", []):
-            recommendations.append(
-                {
-                    "priority": issue["severity"],
-                    "title": issue["message"],
-                    "description": issue["recommendation"],
-                    "command": None,
-                }
-            )
-
-    if network:
-        for issue in network.get("issues", []):
-            recommendations.append(
-                {
-                    "priority": issue["severity"],
-                    "title": issue["message"],
-                    "description": issue["recommendation"],
-                    "command": None,
-                }
-            )
-
-    if users:
-        for issue in users.get("issues", []):
-            recommendations.insert(
-                0,
-                {
-                    "priority": issue["severity"],
-                    "title": issue["message"],
-                    "description": issue["recommendation"],
-                    "command": None,
-                },
-            )
+        _add_issues_to_recommendations(recommendations, kernel_issues[:MAX_KERNEL_ISSUES_REPORT])
 
     return recommendations

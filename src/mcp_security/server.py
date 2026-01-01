@@ -4,7 +4,7 @@
 import json
 import os
 import sys
-from typing import Any
+from typing import Any, Callable
 
 from mcp.server import Server
 from mcp.server.stdio import stdio_server
@@ -14,6 +14,38 @@ from .audit import run_audit
 
 
 app = Server("mcp-server-security")
+
+
+# Helper functions to reduce code repetition
+def _get_log_dir() -> str:
+    """Auto-detect appropriate log directory based on user privileges."""
+    if os.geteuid() == 0:
+        return "/var/log/mcp-watchdog"
+    return f"/tmp/mcp-watchdog-{os.getuid()}"
+
+
+def _get_monitoring_manager():
+    """Get MonitoringManager instance with auto-detected log directory."""
+    from .monitoring.manager import MonitoringManager
+
+    return MonitoringManager(_get_log_dir())
+
+
+def _handle_monitoring_operation(
+    operation: Callable, error_message: str, **kwargs
+) -> list[TextContent]:
+    """Generic handler for monitoring operations with consistent error handling."""
+    try:
+        manager = _get_monitoring_manager()
+        result = operation(manager, **kwargs)
+        return [TextContent(type="text", text=json.dumps(result, indent=2))]
+    except Exception as e:
+        return [
+            TextContent(
+                type="text",
+                text=json.dumps({"error": str(e), "message": error_message}, indent=2),
+            )
+        ]
 
 
 @app.list_tools()
@@ -205,127 +237,46 @@ async def call_tool(name: str, arguments: Any) -> list[TextContent]:
             ]
 
     elif name == "monitoring_status":
-        from .monitoring.manager import MonitoringManager
-
-        try:
-            # Auto-detect log directory
-            if os.geteuid() == 0:
-                log_dir = "/var/log/mcp-watchdog"
-            else:
-                log_dir = f"/tmp/mcp-watchdog-{os.getuid()}"
-
-            manager = MonitoringManager(log_dir)
-            status = manager.get_status()
-
-            return [TextContent(type="text", text=json.dumps(status, indent=2))]
-
-        except Exception as e:
-            return [
-                TextContent(
-                    type="text",
-                    text=json.dumps(
-                        {"error": str(e), "message": "Failed to get monitoring status"},
-                        indent=2,
-                    ),
-                )
-            ]
+        return _handle_monitoring_operation(
+            lambda mgr: mgr.get_status(), "Failed to get monitoring status"
+        )
 
     elif name == "start_monitoring":
-        from .monitoring.manager import MonitoringManager
+        interval = arguments.get("interval_seconds", 3600)
 
-        try:
-            # Auto-detect log directory
-            if os.geteuid() == 0:
-                log_dir = "/var/log/mcp-watchdog"
-            else:
-                log_dir = f"/tmp/mcp-watchdog-{os.getuid()}"
-
-            interval = arguments.get("interval_seconds", 3600)
-
-            # Validate interval (min 5 minutes, max 24 hours)
-            if interval < 300:
-                return [
-                    TextContent(
-                        type="text",
-                        text=json.dumps(
-                            {"error": "Minimum interval is 300 seconds (5 minutes)"}, indent=2
-                        ),
-                    )
-                ]
-            if interval > 86400:
-                return [
-                    TextContent(
-                        type="text",
-                        text=json.dumps(
-                            {"error": "Maximum interval is 86400 seconds (24 hours)"}, indent=2
-                        ),
-                    )
-                ]
-
-            manager = MonitoringManager(log_dir)
-            result = manager.start(interval_seconds=interval)
-
-            return [TextContent(type="text", text=json.dumps(result, indent=2))]
-
-        except Exception as e:
+        # Validate interval (min 5 minutes, max 24 hours)
+        if interval < 300:
             return [
                 TextContent(
                     type="text",
                     text=json.dumps(
-                        {"error": str(e), "message": "Failed to start monitoring"}, indent=2
+                        {"error": "Minimum interval is 300 seconds (5 minutes)"}, indent=2
                     ),
                 )
             ]
+        if interval > 86400:
+            return [
+                TextContent(
+                    type="text",
+                    text=json.dumps(
+                        {"error": "Maximum interval is 86400 seconds (24 hours)"}, indent=2
+                    ),
+                )
+            ]
+
+        return _handle_monitoring_operation(
+            lambda mgr, **kw: mgr.start(**kw),
+            "Failed to start monitoring",
+            interval_seconds=interval,
+        )
 
     elif name == "stop_monitoring":
-        from .monitoring.manager import MonitoringManager
-
-        try:
-            # Auto-detect log directory
-            if os.geteuid() == 0:
-                log_dir = "/var/log/mcp-watchdog"
-            else:
-                log_dir = f"/tmp/mcp-watchdog-{os.getuid()}"
-
-            manager = MonitoringManager(log_dir)
-            result = manager.stop()
-
-            return [TextContent(type="text", text=json.dumps(result, indent=2))]
-
-        except Exception as e:
-            return [
-                TextContent(
-                    type="text",
-                    text=json.dumps(
-                        {"error": str(e), "message": "Failed to stop monitoring"}, indent=2
-                    ),
-                )
-            ]
+        return _handle_monitoring_operation(lambda mgr: mgr.stop(), "Failed to stop monitoring")
 
     elif name == "cleanup_old_logs":
-        from .monitoring.manager import MonitoringManager
-
-        try:
-            # Auto-detect log directory
-            if os.geteuid() == 0:
-                log_dir = "/var/log/mcp-watchdog"
-            else:
-                log_dir = f"/tmp/mcp-watchdog-{os.getuid()}"
-
-            manager = MonitoringManager(log_dir)
-            result = manager.cleanup_old_logs()
-
-            return [TextContent(type="text", text=json.dumps(result, indent=2))]
-
-        except Exception as e:
-            return [
-                TextContent(
-                    type="text",
-                    text=json.dumps(
-                        {"error": str(e), "message": "Failed to cleanup logs"}, indent=2
-                    ),
-                )
-            ]
+        return _handle_monitoring_operation(
+            lambda mgr: mgr.cleanup_old_logs(), "Failed to cleanup logs"
+        )
 
     else:
         raise ValueError(f"Unknown tool: {name}")

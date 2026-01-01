@@ -1,9 +1,10 @@
 """SSH configuration analysis module."""
 
 import re
+from ..constants import PATH_SSH_CONFIG
 
 
-def parse_sshd_config(config_path="/etc/ssh/sshd_config"):
+def parse_sshd_config(config_path=PATH_SSH_CONFIG):
     """Parse SSH daemon configuration file."""
     config = {
         "port": 22,

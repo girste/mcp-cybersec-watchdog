@@ -7,6 +7,14 @@ that could indicate security issues or privilege escalation risks.
 import subprocess
 from typing import List, Dict
 
+from ..constants import (
+    TIMEOUT_SHORT,
+    TIMEOUT_MEDIUM,
+    TIMEOUT_LONG,
+    MAX_WORLD_WRITABLE_FILES,
+    MAX_SUID_FILES,
+)
+
 EXCLUDED_PATHS = ["/proc", "/sys", "/dev", "/run"]
 
 SUID_WHITELIST = {
@@ -24,8 +32,6 @@ SUID_WHITELIST = {
     "/usr/lib/dbus-1.0/dbus-daemon-launch-helper",
     "/usr/lib/policykit-1/polkit-agent-helper-1",
 }
-
-FIND_TIMEOUT = 30
 
 
 def _build_exclude_args() -> List[str]:
@@ -46,7 +52,7 @@ def _find_world_writable_files() -> List[str]:
             stdout=subprocess.PIPE,
             stderr=subprocess.DEVNULL,
             text=True,
-            timeout=FIND_TIMEOUT,
+            timeout=TIMEOUT_LONG,
         )
 
         if result.returncode != 0:
@@ -58,7 +64,7 @@ def _find_world_writable_files() -> List[str]:
             if line.strip() and not line.startswith("/tmp/") and not line.startswith("/var/tmp/")
         ]
 
-        return files[:50]  # Limit to 50 files
+        return files[:MAX_WORLD_WRITABLE_FILES]
 
     except (subprocess.SubprocessError, subprocess.TimeoutExpired):
         return []
@@ -88,7 +94,7 @@ def _find_suid_files() -> List[Dict[str, str]]:
             stdout=subprocess.PIPE,
             stderr=subprocess.DEVNULL,
             text=True,
-            timeout=FIND_TIMEOUT,
+            timeout=TIMEOUT_LONG,
         )
 
         if result.returncode != 0:
@@ -107,7 +113,7 @@ def _find_suid_files() -> List[Dict[str, str]]:
                     }
                 )
 
-        return files[:100]  # Limit to 100 files
+        return files[:MAX_SUID_FILES]
 
     except (subprocess.SubprocessError, subprocess.TimeoutExpired):
         return []
@@ -121,7 +127,7 @@ def _check_tmp_permissions() -> Dict:
             stdout=subprocess.PIPE,
             stderr=subprocess.DEVNULL,
             text=True,
-            timeout=5,
+            timeout=TIMEOUT_SHORT,
         )
 
         if result.returncode == 0:
@@ -153,7 +159,7 @@ def _check_suspicious_files() -> List[str]:
                 stdout=subprocess.PIPE,
                 stderr=subprocess.DEVNULL,
                 text=True,
-                timeout=10,
+                timeout=TIMEOUT_MEDIUM,
             )
 
             if result.returncode == 0:
