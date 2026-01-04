@@ -1,5 +1,4 @@
 """Network connections security analyzer.
-from ..utils.command import run_command_sudo
 
 Analyzes active network connections, listening services, and detects
 suspicious network activity or unexpected connections.
@@ -7,6 +6,7 @@ suspicious network activity or unexpected connections.
 
 import re
 from typing import List, Dict
+from ..utils.command import run_command_sudo
 
 KNOWN_SAFE_PROCESSES = {
     "sshd",
@@ -108,7 +108,7 @@ def _parse_ss_output() -> List[Dict]:
 
         return connections
 
-    except (Exception):
+    except Exception:
         return []
 
 

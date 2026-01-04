@@ -5,6 +5,7 @@ Focus on technical controls applicable to Linux servers.
 """
 
 from ..utils.detect import run_with_sudo
+from ..utils.command import run_command_sudo
 
 
 NIST_FAMILIES = {
@@ -49,7 +50,7 @@ def _check_password_complexity():
 
         return False, "Password complexity not configured"
 
-    except (Exception):
+    except Exception:
         return False, "Unable to check password policy"
 
 
@@ -66,7 +67,7 @@ def _check_session_timeout():
 
         return False, "Session timeout not configured"
 
-    except (Exception):
+    except Exception:
         return False, "Unable to check session timeout"
 
 
@@ -149,7 +150,7 @@ def check_system_protection():
         passed = value == "2"
         detail = f"ASLR {'enabled (full)' if passed else f'partial or disabled ({value})'}"
 
-    except (Exception):
+    except Exception:
         passed = False
         detail = "Unable to check ASLR"
 

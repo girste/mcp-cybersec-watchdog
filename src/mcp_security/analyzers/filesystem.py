@@ -5,6 +5,7 @@ that could indicate security issues or privilege escalation risks.
 """
 
 from typing import List, Dict
+
 # Command utilities
 from ..utils.command import run_command_sudo
 
@@ -64,7 +65,7 @@ def _find_world_writable_files() -> List[str]:
 
         return files[:MAX_WORLD_WRITABLE_FILES]
 
-    except (Exception):
+    except Exception:
         return []
 
 
@@ -110,7 +111,7 @@ def _find_suid_files() -> List[Dict[str, str]]:
 
         return files[:MAX_SUID_FILES]
 
-    except (Exception):
+    except Exception:
         return []
 
 
@@ -133,7 +134,7 @@ def _check_tmp_permissions() -> Dict:
                 "secure": is_secure,
             }
 
-    except (Exception):
+    except Exception:
         pass
 
     return {"checked": False}
@@ -155,7 +156,7 @@ def _check_suspicious_files() -> List[str]:
                 files = [f.strip() for f in result.stdout.split("\n") if f.strip()]
                 suspicious_files.extend(files[:20])  # Limit per location
 
-        except (Exception):
+        except Exception:
             continue
 
     return suspicious_files[:30]  # Global limit

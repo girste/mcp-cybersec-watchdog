@@ -5,30 +5,7 @@ from concurrent.futures import ThreadPoolExecutor, TimeoutError as FuturesTimeou
 from datetime import datetime, timezone
 from typing import List, Dict, Any, Optional, Callable
 
-from .analyzers.firewall import analyze_firewall
-from .analyzers.ssh import analyze_ssh
-from .analyzers.threats import analyze_threats
-from .analyzers.fail2ban import analyze_fail2ban
-from .analyzers.services import analyze_services
-from .analyzers.docker_sec import analyze_docker
-from .analyzers.updates import analyze_updates
-from .analyzers.mac import analyze_mac
-from .analyzers.kernel import analyze_kernel
-from .analyzers.ssl import analyze_ssl
-from .analyzers.disk import analyze_disk
-from .analyzers.cve import analyze_cve
-from .analyzers.cis import analyze_cis
-from .analyzers.containers import analyze_containers
-from .analyzers.nist import analyze_nist
-from .analyzers.pci import analyze_pci
-from .analyzers.webheaders import analyze_webheaders
-from .analyzers.filesystem import analyze_filesystem
-from .analyzers.network import analyze_network
-from .analyzers.users import analyze_users
-from .analyzers.rootkit import analyze_rootkit
-from .analyzers.sudoers import analyze_sudoers
-from .analyzers.system_hardening import analyze_system_hardening
-from .utils.detect import get_os_info, get_auth_log_path
+from .utils.detect import get_os_info
 from .utils.privacy import mask_ip, get_masked_hostname
 from .utils.config import load_config
 from .utils.analyzer_registry import get_all_analyzers

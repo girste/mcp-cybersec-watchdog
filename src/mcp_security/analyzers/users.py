@@ -64,7 +64,7 @@ def _parse_passwd_file() -> List[Dict]:
 
         return users
 
-    except (subprocess.SubprocessError, subprocess.TimeoutExpired, ValueError):
+    except ValueError:
         return []
 
 

@@ -5,6 +5,7 @@ Focus on system hardening and security controls for Linux servers.
 """
 
 from ..utils.detect import run_with_sudo
+from ..utils.command import run_command_sudo
 
 
 PCI_REQUIREMENTS = {
@@ -83,7 +84,7 @@ def _check_password_policy():
 
         return False, "Password policy not configured"
 
-    except (Exception):
+    except Exception:
         return False, "Unable to check password policy"
 
 
@@ -100,7 +101,7 @@ def _check_logging_enabled():
             )
             if not result or not result.success:
                 missing.append(log_file)
-        except (Exception):
+        except Exception:
             missing.append(log_file)
 
     if missing:

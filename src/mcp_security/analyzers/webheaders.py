@@ -1,5 +1,4 @@
 """Web server security headers analyzer.
-from ..utils.command import run_command_sudo
 
 Checks HTTP security headers for web servers running on the system.
 Detects nginx, Apache, Caddy and analyzes their security headers.
@@ -9,6 +8,7 @@ Intelligently extracts real domains from config files and tests them.
 import re
 from typing import Optional, Dict, List
 from pathlib import Path
+from ..utils.command import run_command_sudo
 from ..utils.logger import get_logger
 
 logger = get_logger(__name__)
@@ -178,7 +178,7 @@ def _get_listening_ports():
 
         return list(set(ports))
 
-    except (Exception):
+    except Exception:
         return []
 
 
@@ -234,7 +234,7 @@ def _check_headers_for_url(url: str) -> Optional[Dict[str, str]]:
 
         return headers
 
-    except (Exception):
+    except Exception:
         return None
 
 
@@ -278,7 +278,7 @@ def _detect_web_server():
             if result.returncode == 0 and result.stdout.strip() == "active":
                 servers.append(service)
 
-        except (Exception):
+        except Exception:
             continue
 
     return servers

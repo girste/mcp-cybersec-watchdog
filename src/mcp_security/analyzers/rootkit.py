@@ -1,5 +1,4 @@
 """Rootkit and malware detection analyzer.
-from ..utils.command import run_command_sudo
 
 Checks for common rootkit indicators and suspicious system modifications.
 Does not replace dedicated tools like rkhunter/chkrootkit but provides
@@ -9,6 +8,7 @@ basic compromise detection.
 import os
 from pathlib import Path
 from ..utils.detect import run_with_sudo
+from ..utils.command import run_command_sudo
 from ..utils.logger import get_logger
 
 logger = get_logger(__name__)
@@ -21,8 +21,8 @@ def _check_rkhunter_installed():
             ["which", "rkhunter"],
             timeout=5,
         )
-        return result.returncode == 0
-    except (Exception):
+        return result and result.success
+    except Exception:
         return False
 
 
@@ -33,8 +33,8 @@ def _check_chkrootkit_installed():
             ["which", "chkrootkit"],
             timeout=5,
         )
-        return result.returncode == 0
-    except (Exception):
+        return result and result.success
+    except Exception:
         return False
 
 
@@ -70,7 +70,7 @@ def _check_hidden_processes():
 
         return len(hidden), list(hidden)[:10]  # Sample first 10
 
-    except (OSError, subprocess.SubprocessError, subprocess.TimeoutExpired) as e:
+    except OSError as e:
         logger.debug(f"Error checking hidden processes: {e}")
         return 0, []
 
@@ -202,7 +202,7 @@ def _run_rkhunter_check():
 
         return {"warnings": warnings, "total": len(warnings)}
 
-    except (Exception) as e:
+    except Exception as e:
         logger.warning(f"rkhunter check failed: {e}")
         return None
 

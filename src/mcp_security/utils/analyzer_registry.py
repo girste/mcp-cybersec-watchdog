@@ -1,6 +1,6 @@
 """Centralized analyzer registry and management."""
 
-from typing import List, Dict, Any, Callable
+from typing import List, Dict, Any
 from ..analyzers.firewall import analyze_firewall
 from ..analyzers.ssh import analyze_ssh
 from ..analyzers.threats import analyze_threats

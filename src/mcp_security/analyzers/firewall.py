@@ -2,7 +2,6 @@
 
 import re
 from ..utils.command import run_command_sudo
-from .base import create_analyzer_result
 
 
 def analyze_ufw():
@@ -83,7 +82,11 @@ def analyze_firewalld():
 
     # Get list of services
     services_result = run_command_sudo(["firewall-cmd", "--list-services"])
-    services = services_result.stdout.strip().split() if services_result and services_result.success else []
+    services = (
+        services_result.stdout.strip().split()
+        if services_result and services_result.success
+        else []
+    )
 
     return {
         "type": "firewalld",

@@ -1,5 +1,4 @@
 """Sudo configuration security analyzer.
-from ..utils.command import run_command_sudo
 
 Audits /etc/sudoers and /etc/sudoers.d/ for security issues:
 - NOPASSWD usage
@@ -11,6 +10,7 @@ Audits /etc/sudoers and /etc/sudoers.d/ for security issues:
 import re
 from pathlib import Path
 from ..utils.detect import run_with_sudo
+from ..utils.command import run_command_sudo
 from ..utils.logger import get_logger
 
 logger = get_logger(__name__)
@@ -174,7 +174,7 @@ def _get_sudo_users():
             if len(parts) >= 4 and parts[3]:
                 sudo_users.extend(parts[3].split(","))
 
-    except (Exception) as e:
+    except Exception as e:
         logger.debug(f"Error getting sudo group: {e}")
 
     # Users in wheel group (RHEL/CentOS)
@@ -191,7 +191,7 @@ def _get_sudo_users():
                     if user not in sudo_users:
                         sudo_users.append(user)
 
-    except (Exception) as e:
+    except Exception as e:
         logger.debug(f"Error getting wheel group: {e}")
 
     return sudo_users
