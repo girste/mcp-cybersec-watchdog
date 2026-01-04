@@ -1,7 +1,7 @@
 """Network services and open ports analysis."""
 
 import re
-from ..utils.detect import run_with_sudo
+from ..utils.command import run_command_sudo
 
 CRITICAL_SERVICES = [
     "ssh",
@@ -24,7 +24,7 @@ UNKNOWN_SERVICES_THRESHOLD = 3
 
 def parse_listening_ports():
     """Parse listening ports and services using ss command."""
-    result = run_with_sudo(["ss", "-tulpn"])
+    result = run_command_sudo(["ss", "-tulpn"])
 
     if not result:
         return []
@@ -118,7 +118,7 @@ def categorize_services(services):
 
 def check_systemd_failed():
     """Check for failed systemd units."""
-    result = run_with_sudo(["systemctl", "list-units", "--failed", "--no-pager", "--plain"])
+    result = run_command_sudo(["systemctl", "list-units", "--failed", "--no-pager", "--plain"])
 
     if not result:
         return []
@@ -143,7 +143,7 @@ def check_critical_services():
     installed_states = {"active", "failed", "degraded", "activating"}
 
     for service in CRITICAL_SERVICES:
-        result = run_with_sudo(["systemctl", "is-active", f"{service}.service"])
+        result = run_command_sudo(["systemctl", "is-active", f"{service}.service"])
         if not result:
             continue
 

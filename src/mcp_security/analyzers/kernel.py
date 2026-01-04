@@ -1,6 +1,6 @@
 """Kernel security hardening analysis."""
 
-from ..utils.detect import run_with_sudo
+from ..utils.command import run_command_sudo
 
 
 # Security-critical sysctl parameters
@@ -29,7 +29,7 @@ SECURITY_PARAMS = {
 
 def get_sysctl_value(param):
     """Get current value of a sysctl parameter."""
-    result = run_with_sudo(["sysctl", "-n", param])
+    result = run_command_sudo(["sysctl", "-n", param])
 
     if not result:
         return None

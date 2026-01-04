@@ -1,8 +1,0 @@
-{
-  "mcpServers": {
-    "cybersec-watchdog": {
-      "command": "mcp-watchdog",
-      "env": {}
-    }
-  }
-}

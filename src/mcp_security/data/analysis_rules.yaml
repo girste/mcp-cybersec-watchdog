@@ -1,0 +1,403 @@
+# Security Analysis Rules
+# Defines conditions and messages for automated security assessment
+#
+# Structure:
+#   analyzer_name:
+#     - conditions: single condition or list of conditions (AND logic)
+#       message: message template (supports {field} placeholders)
+#       category: issues | warnings | good | suspicious
+
+firewall:
+  - conditions:
+      field: active
+      op: "=="
+      value: false
+    message: "No active firewall detected - server is completely exposed"
+    category: issues
+
+  - conditions:
+      field: default_policy
+      op: "=="
+      value: deny
+    message: "Firewall follows best practice with default deny policy"
+    category: good
+
+  - conditions:
+      - field: active
+        op: "=="
+        value: true
+      - field: default_policy
+        op: "!="
+        value: deny
+    message: "Firewall default policy is not restrictive enough"
+    category: warnings
+
+ssh:
+  - conditions:
+      field: permit_root_login
+      op: "=="
+      value: "no"
+    message: "Root login via SSH is properly disabled"
+    category: good
+
+  - conditions:
+      field: permit_root_login
+      op: "!="
+      value: "no"
+    message: "Root login is enabled - major security risk"
+    category: issues
+
+  - conditions:
+      field: password_auth
+      op: "=="
+      value: "no"
+    message: "Password authentication disabled, key-based auth only"
+    category: good
+
+  - conditions:
+      field: password_auth
+      op: "=="
+      value: "yes"
+    message: "Password authentication enabled - brute force attacks possible"
+    category: warnings
+
+  - conditions:
+      field: port
+      op: "!="
+      value: 22
+    message: "SSH running on non-standard port {port} reduces automated attacks"
+    category: good
+
+threats:
+  - conditions:
+      field: total_attempts
+      op: ">"
+      value: 100
+    message: "High number of failed login attempts ({total_attempts}) detected"
+    category: warnings
+
+  - conditions:
+      field: total_attempts
+      op: ">"
+      value: 1000
+    message: "Unusually high attack volume: {total_attempts} attempts in {period_days} days"
+    category: suspicious
+
+services:
+  - conditions:
+      field: exposed_services
+      op: ">"
+      value: 10
+    message: "{exposed_services} services exposed to internet - large attack surface"
+    category: warnings
+
+  - conditions:
+      field: systemd.critical_down
+      op: ">"
+      value: 0
+    message: "{systemd.critical_down} critical service(s) are down or degraded"
+    category: issues
+
+  - conditions:
+      field: systemd.failed_count
+      op: ">"
+      value: 0
+    message: "{systemd.failed_count} systemd unit(s) in failed state"
+    category: warnings
+
+docker:
+  - conditions:
+      - field: installed
+        op: "=="
+        value: true
+      - field: running_containers
+        op: ">"
+        value: 0
+      - field: rootless
+        op: "=="
+        value: true
+    message: "Docker running in rootless mode for better isolation"
+    category: good
+
+  - conditions:
+      - field: installed
+        op: "=="
+        value: true
+      - field: running_containers
+        op: ">"
+        value: 0
+      - field: rootless
+        op: "=="
+        value: false
+    message: "Docker running as root - consider rootless mode for production"
+    category: warnings
+
+updates:
+  - conditions:
+      field: security_updates
+      op: ">"
+      value: 10
+    message: "{security_updates} critical security updates pending - apply immediately"
+    category: issues
+
+  - conditions:
+      - field: security_updates
+        op: ">"
+        value: 0
+      - field: security_updates
+        op: "<="
+        value: 10
+    message: "{security_updates} security updates available"
+    category: warnings
+
+  - conditions:
+      field: security_updates
+      op: "=="
+      value: 0
+    message: "System is up to date with security patches"
+    category: good
+
+mac:
+  - conditions:
+      field: enabled
+      op: "=="
+      value: true
+    message: "Mandatory Access Control ({type}) is enabled and active"
+    category: good
+
+  - conditions:
+      field: enabled
+      op: "=="
+      value: false
+    message: "No MAC system (AppArmor/SELinux) detected - missing additional security layer"
+    category: warnings
+
+kernel:
+  - conditions:
+      field: hardening_percentage
+      op: ">="
+      value: 80
+    message: "Excellent kernel hardening ({hardening_percentage}%)"
+    category: good
+
+  - conditions:
+      - field: hardening_percentage
+        op: ">="
+        value: 60
+      - field: hardening_percentage
+        op: "<"
+        value: 80
+    message: "Moderate kernel hardening ({hardening_percentage}%) - room for improvement"
+    category: warnings
+
+  - conditions:
+      field: hardening_percentage
+      op: "<"
+      value: 60
+    message: "Poor kernel hardening ({hardening_percentage}%) - critical parameters not configured"
+    category: issues
+
+fail2ban:
+  - conditions:
+      - field: installed
+        op: "=="
+        value: true
+      - field: active
+        op: "=="
+        value: true
+    message: "Fail2ban active for automated intrusion prevention"
+    category: good
+
+ssl:
+  - conditions:
+      - field: checked
+        op: "=="
+        value: true
+      - field: expired
+        op: ">"
+        value: 0
+    message: "{expired} SSL certificate(s) have EXPIRED - critical issue"
+    category: issues
+
+  - conditions:
+      - field: checked
+        op: "=="
+        value: true
+      - field: expiring_soon_30days
+        op: ">"
+        value: 0
+    message: "{expiring_soon_30days} SSL certificate(s) expiring in less than 30 days"
+    category: warnings
+
+  - conditions:
+      - field: checked
+        op: "=="
+        value: true
+      - field: total_certificates
+        op: ">"
+        value: 0
+      - field: expired
+        op: "=="
+        value: 0
+      - field: expiring_soon_30days
+        op: "=="
+        value: 0
+    message: "All SSL certificates are valid and not expiring soon"
+    category: good
+
+disk:
+  - conditions:
+      field: critical_count
+      op: ">"
+      value: 0
+    message: "{critical_count} filesystem(s) critically low on space (>90%)"
+    category: issues
+
+  - conditions:
+      field: warning_count
+      op: ">"
+      value: 0
+    message: "{warning_count} filesystem(s) running low on space (>80%)"
+    category: warnings
+
+cve:
+  - conditions:
+      - field: checked
+        op: "=="
+        value: true
+      - field: critical_vulnerabilities
+        op: ">"
+        value: 0
+    message: "{critical_vulnerabilities} CRITICAL CVE vulnerabilities found - patch immediately"
+    category: issues
+
+  - conditions:
+      - field: checked
+        op: "=="
+        value: true
+      - field: high_vulnerabilities
+        op: ">"
+        value: 0
+    message: "{high_vulnerabilities} high-severity vulnerabilities detected"
+    category: warnings
+
+  - conditions:
+      - field: checked
+        op: "=="
+        value: true
+      - field: vulnerabilities_found
+        op: "=="
+        value: 0
+    message: "No critical CVE vulnerabilities detected in core packages"
+    category: good
+
+cis:
+  - conditions:
+      field: compliance_percentage
+      op: ">="
+      value: 90
+    message: "Excellent CIS Benchmark compliance ({compliance_percentage}%)"
+    category: good
+
+  - conditions:
+      - field: compliance_percentage
+        op: ">="
+        value: 70
+      - field: compliance_percentage
+        op: "<"
+        value: 90
+    message: "Good CIS compliance ({compliance_percentage}%) - some improvements needed"
+    category: warnings
+
+  - conditions:
+      field: compliance_percentage
+      op: "<"
+      value: 70
+    message: "Poor CIS compliance ({compliance_percentage}%) - many baseline controls failing"
+    category: issues
+
+nist:
+  - conditions:
+      field: compliance_percentage
+      op: ">="
+      value: 80
+    message: "Strong NIST 800-53 compliance ({compliance_percentage}%)"
+    category: good
+
+  - conditions:
+      field: compliance_percentage
+      op: "<"
+      value: 60
+    message: "Low NIST 800-53 compliance ({compliance_percentage}%)"
+    category: warnings
+
+pci:
+  - conditions:
+      field: compliance_percentage
+      op: ">="
+      value: 90
+    message: "Excellent PCI-DSS compliance ({compliance_percentage}%)"
+    category: good
+
+  - conditions:
+      field: compliance_percentage
+      op: "<"
+      value: 70
+    message: "Low PCI-DSS compliance ({compliance_percentage}%) - critical for payment systems"
+    category: warnings
+
+containers:
+  - conditions:
+      - field: checked
+        op: "=="
+        value: true
+      - field: critical_vulnerabilities
+        op: ">"
+        value: 0
+    message: "{critical_vulnerabilities} critical vulnerabilities in container images"
+    category: issues
+
+  - conditions:
+      - field: checked
+        op: "=="
+        value: true
+      - field: scanned_images
+        op: ">"
+        value: 0
+      - field: critical_vulnerabilities
+        op: "=="
+        value: 0
+    message: "Container images scanned - no critical vulnerabilities found"
+    category: good
+
+rootkit:
+  - conditions:
+      - field: checked
+        op: "=="
+        value: true
+      - field: suspicious_files
+        op: ">"
+        value: 0
+    message: "{suspicious_files} suspicious file(s) detected - possible rootkit indicators"
+    category: suspicious
+
+users:
+  - conditions:
+      - field: checked
+        op: "=="
+        value: true
+      - field: uid_zero_users
+        op: ">"
+        value: 0
+    message: "{uid_zero_users} unauthorized users with root privileges (UID 0)"
+    category: issues
+
+  - conditions:
+      - field: checked
+        op: "=="
+        value: true
+      - field: users_without_password
+        op: ">"
+        value: 0
+    message: "{users_without_password} user accounts without password set"
+    category: warnings

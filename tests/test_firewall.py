@@ -20,9 +20,9 @@ To                         Action      From
 80/tcp                     ALLOW       Anywhere
 443/tcp                    ALLOW       Anywhere
 """
-    mock_result.returncode = 0
+    mock_result.success = True
 
-    with patch("mcp_security.analyzers.firewall.run_with_sudo", return_value=mock_result):
+    with patch("mcp_security.analyzers.firewall.run_command_sudo", return_value=mock_result):
         result = analyze_ufw()
 
     assert result is not None
@@ -38,9 +38,9 @@ def test_analyze_ufw_inactive():
     """Test UFW with inactive status."""
     mock_result = Mock()
     mock_result.stdout = "Status: inactive\n"
-    mock_result.returncode = 0
+    mock_result.success = True
 
-    with patch("mcp_security.analyzers.firewall.run_with_sudo", return_value=mock_result):
+    with patch("mcp_security.analyzers.firewall.run_command_sudo", return_value=mock_result):
         result = analyze_ufw()
 
     assert result is not None
@@ -54,9 +54,9 @@ def test_analyze_ufw_default_deny():
 
 Default: deny (incoming), allow (outgoing), deny (routed)
 """
-    mock_result.returncode = 0
+    mock_result.success = True
 
-    with patch("mcp_security.analyzers.firewall.run_with_sudo", return_value=mock_result):
+    with patch("mcp_security.analyzers.firewall.run_command_sudo", return_value=mock_result):
         result = analyze_ufw()
 
     assert result["default_policy"] == "deny"
@@ -64,7 +64,7 @@ Default: deny (incoming), allow (outgoing), deny (routed)
 
 def test_analyze_ufw_not_installed():
     """Test UFW when not installed."""
-    with patch("mcp_security.analyzers.firewall.run_with_sudo", return_value=None):
+    with patch("mcp_security.analyzers.firewall.run_command_sudo", return_value=None):
         result = analyze_ufw()
 
     assert result is None
@@ -88,9 +88,9 @@ target     prot opt source               destination
 Chain OUTPUT (policy ACCEPT)
 target     prot opt source               destination
 """
-    mock_result.returncode = 0
+    mock_result.success = True
 
-    with patch("mcp_security.analyzers.firewall.run_with_sudo", return_value=mock_result):
+    with patch("mcp_security.analyzers.firewall.run_command_sudo", return_value=mock_result):
         result = analyze_iptables()
 
     assert result is not None
@@ -111,9 +111,9 @@ target     prot opt source               destination
 Chain OUTPUT (policy ACCEPT)
 target     prot opt source               destination
 """
-    mock_result.returncode = 0
+    mock_result.success = True
 
-    with patch("mcp_security.analyzers.firewall.run_with_sudo", return_value=mock_result):
+    with patch("mcp_security.analyzers.firewall.run_command_sudo", return_value=mock_result):
         result = analyze_iptables()
 
     assert result is not None
@@ -124,13 +124,13 @@ def test_analyze_firewalld_running():
     """Test firewalld when running."""
     mock_state = Mock()
     mock_state.stdout = "running"
-    mock_state.returncode = 0
+    mock_state.success = True
 
     mock_services = Mock()
     mock_services.stdout = "ssh http https"
-    mock_services.returncode = 0
+    mock_services.success = True
 
-    with patch("mcp_security.analyzers.firewall.run_with_sudo") as mock_sudo:
+    with patch("mcp_security.analyzers.firewall.run_command_sudo") as mock_sudo:
         mock_sudo.side_effect = [mock_state, mock_services]
         result = analyze_firewalld()
 
@@ -144,9 +144,9 @@ def test_analyze_firewalld_not_running():
     """Test firewalld when not running."""
     mock_result = Mock()
     mock_result.stdout = "failed"
-    mock_result.returncode = 0
+    mock_result.success = True
 
-    with patch("mcp_security.analyzers.firewall.run_with_sudo", return_value=mock_result):
+    with patch("mcp_security.analyzers.firewall.run_command_sudo", return_value=mock_result):
         result = analyze_firewalld()
 
     assert result is None
@@ -156,9 +156,9 @@ def test_analyze_firewall_detects_ufw():
     """Test analyze_firewall auto-detects UFW."""
     mock_result = Mock()
     mock_result.stdout = "Status: active"
-    mock_result.returncode = 0
+    mock_result.success = True
 
-    with patch("mcp_security.analyzers.firewall.run_with_sudo", return_value=mock_result):
+    with patch("mcp_security.analyzers.firewall.run_command_sudo", return_value=mock_result):
         result = analyze_firewall()
 
     assert result["type"] == "ufw"
@@ -166,7 +166,7 @@ def test_analyze_firewall_detects_ufw():
 
 def test_analyze_firewall_no_firewall():
     """Test when no firewall is detected."""
-    with patch("mcp_security.analyzers.firewall.run_with_sudo", return_value=None):
+    with patch("mcp_security.analyzers.firewall.run_command_sudo", return_value=None):
         result = analyze_firewall()
 
     assert result["type"] == "none"

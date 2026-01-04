@@ -31,6 +31,8 @@ from .analyzers.system_hardening import analyze_system_hardening
 from .utils.detect import get_os_info, get_auth_log_path
 from .utils.privacy import mask_ip, get_masked_hostname
 from .utils.config import load_config
+from .utils.analyzer_registry import get_all_analyzers
+from .utils.rules_loader import load_analysis_rules
 from .constants import MAX_KERNEL_ISSUES_REPORT
 
 
@@ -158,115 +160,25 @@ def _get_analyzer_registry(config: Dict[str, Any]) -> List[Dict[str, Any]]:
     """
     Build registry of all security analyzers with metadata.
 
+    Uses centralized analyzer_registry module for cleaner management.
+
     Returns list of dicts with:
     - name: analyzer identifier
     - func: analyzer function
     - enabled: whether analyzer is enabled in config
-    - kwargs: optional kwargs for analyzer (e.g., threats needs log_path)
+    - kwargs: optional kwargs for analyzer
     """
-    auth_log_path = get_auth_log_path()
-    threat_days = config.get("threat_analysis_days", 7)
-    checks = config["checks"]
+    analyzers = get_all_analyzers(config)
 
+    # Convert AnalyzerMetadata to legacy dict format for backward compatibility
     return [
         {
-            "name": "firewall",
-            "func": analyze_firewall,
-            "enabled": checks.get("firewall", True),
-            "kwargs": {},
-        },
-        {"name": "ssh", "func": analyze_ssh, "enabled": checks.get("ssh", True), "kwargs": {}},
-        {
-            "name": "threats",
-            "func": analyze_threats,
-            "enabled": checks.get("threats", True),
-            "kwargs": {"log_path": auth_log_path, "days": threat_days},
-        },
-        {
-            "name": "fail2ban",
-            "func": analyze_fail2ban,
-            "enabled": checks.get("fail2ban", True),
-            "kwargs": {},
-        },
-        {
-            "name": "services",
-            "func": analyze_services,
-            "enabled": checks.get("services", True),
-            "kwargs": {},
-        },
-        {
-            "name": "docker",
-            "func": analyze_docker,
-            "enabled": checks.get("docker", True),
-            "kwargs": {},
-        },
-        {
-            "name": "updates",
-            "func": analyze_updates,
-            "enabled": checks.get("updates", True),
-            "kwargs": {},
-        },
-        {"name": "mac", "func": analyze_mac, "enabled": checks.get("mac", True), "kwargs": {}},
-        {
-            "name": "kernel",
-            "func": analyze_kernel,
-            "enabled": checks.get("kernel", True),
-            "kwargs": {},
-        },
-        {"name": "ssl", "func": analyze_ssl, "enabled": checks.get("ssl", True), "kwargs": {}},
-        {"name": "disk", "func": analyze_disk, "enabled": checks.get("disk", True), "kwargs": {}},
-        {"name": "cve", "func": analyze_cve, "enabled": checks.get("cve", True), "kwargs": {}},
-        {"name": "cis", "func": analyze_cis, "enabled": checks.get("cis", True), "kwargs": {}},
-        {
-            "name": "containers",
-            "func": analyze_containers,
-            "enabled": checks.get("containers", True),
-            "kwargs": {},
-        },
-        {"name": "nist", "func": analyze_nist, "enabled": checks.get("nist", True), "kwargs": {}},
-        {"name": "pci", "func": analyze_pci, "enabled": checks.get("pci", True), "kwargs": {}},
-        {
-            "name": "webheaders",
-            "func": analyze_webheaders,
-            "enabled": checks.get("webheaders", True),
-            "kwargs": {},
-        },
-        {
-            "name": "filesystem",
-            "func": analyze_filesystem,
-            "enabled": checks.get("filesystem", True),
-            "kwargs": {},
-        },
-        {
-            "name": "network",
-            "func": analyze_network,
-            "enabled": checks.get("network", True),
-            "kwargs": {},
-        },
-        {
-            "name": "users",
-            "func": analyze_users,
-            "enabled": checks.get("users", True),
-            "kwargs": {},
-        },
-        {
-            "name": "rootkit",
-            "func": analyze_rootkit,
-            "enabled": checks.get("rootkit", True),
-            "kwargs": {},
-        },
-        {
-            "name": "sudoers",
-            "func": analyze_sudoers,
-            "enabled": checks.get("sudoers", True),
-            "kwargs": {},
-        },
-        {
-            "name": "system_hardening",
-            "func": analyze_system_hardening,
-            "enabled": checks.get("system_hardening", True),
-            "kwargs": {},
-        },
+            "name": a.name,
+            "func": a.func,
+            "enabled": True,  # Already filtered by get_all_analyzers
+            "kwargs": a.kwargs,
+        }
+        for a in analyzers
     ]
 
 
@@ -480,433 +392,49 @@ def generate_security_analysis(
     good_practices = []
     suspicious = []
 
-    # Data-driven analysis rules configuration
-    # Each rule: (analyzer_data, conditions, message, category)
-    analysis_rules = [
-        # Firewall
-        (
-            firewall,
-            {"field": "active", "op": "==", "value": False},
-            "No active firewall detected - server is completely exposed",
-            "issues",
-        ),
-        (
-            firewall,
-            {"field": "default_policy", "op": "==", "value": "deny"},
-            "Firewall follows best practice with default deny policy",
-            "good",
-        ),
-        (
-            firewall,
-            [
-                {"field": "active", "op": "==", "value": True},
-                {"field": "default_policy", "op": "!=", "value": "deny"},
-            ],
-            "Firewall default policy is not restrictive enough",
-            "warnings",
-        ),
-        # SSH
-        (
-            ssh,
-            {"field": "permit_root_login", "op": "==", "value": "no"},
-            "Root login via SSH is properly disabled",
-            "good",
-        ),
-        (
-            ssh,
-            {"field": "permit_root_login", "op": "!=", "value": "no"},
-            "Root login is enabled - major security risk",
-            "issues",
-        ),
-        (
-            ssh,
-            {"field": "password_auth", "op": "==", "value": "no"},
-            "Password authentication disabled, key-based auth only",
-            "good",
-        ),
-        (
-            ssh,
-            {"field": "password_auth", "op": "==", "value": "yes"},
-            "Password authentication enabled - brute force attacks possible",
-            "warnings",
-        ),
-        (
-            ssh,
-            {"field": "port", "op": "!=", "value": 22},
-            "SSH running on non-standard port {port} reduces automated attacks",
-            "good",
-        ),
-        # Threats
-        (
-            threats,
-            {"field": "total_attempts", "op": ">", "value": 100},
-            "High number of failed login attempts ({total_attempts}) detected",
-            "warnings",
-        ),
-        (
-            threats,
-            {"field": "total_attempts", "op": ">", "value": 1000},
-            "Unusually high attack volume: {total_attempts} attempts in {period_days} days",
-            "suspicious",
-        ),
-        # Services
-        (
-            services,
-            {"field": "exposed_services", "op": ">", "value": 10},
-            "{exposed_services} services exposed to internet - large attack surface",
-            "warnings",
-        ),
-        (
-            services,
-            {"field": "systemd.critical_down", "op": ">", "value": 0},
-            "{systemd.critical_down} critical service(s) are down or degraded",
-            "issues",
-        ),
-        (
-            services,
-            {"field": "systemd.failed_count", "op": ">", "value": 0},
-            "{systemd.failed_count} systemd unit(s) in failed state",
-            "warnings",
-        ),
-        # Docker
-        (
-            docker,
-            [
-                {"field": "installed", "op": "==", "value": True},
-                {"field": "running_containers", "op": ">", "value": 0},
-                {"field": "rootless", "op": "==", "value": True},
-            ],
-            "Docker running in rootless mode for better isolation",
-            "good",
-        ),
-        (
-            docker,
-            [
-                {"field": "installed", "op": "==", "value": True},
-                {"field": "running_containers", "op": ">", "value": 0},
-                {"field": "rootless", "op": "==", "value": False},
-            ],
-            "Docker running as root - consider rootless mode for production",
-            "warnings",
-        ),
-        # Updates
-        (
-            updates,
-            {"field": "security_updates", "op": ">", "value": 10},
-            "{security_updates} critical security updates pending - apply immediately",
-            "issues",
-        ),
-        (
-            updates,
-            [
-                {"field": "security_updates", "op": ">", "value": 0},
-                {"field": "security_updates", "op": "<=", "value": 10},
-            ],
-            "{security_updates} security updates available",
-            "warnings",
-        ),
-        (
-            updates,
-            {"field": "security_updates", "op": "==", "value": 0},
-            "System is up to date with security patches",
-            "good",
-        ),
-        # MAC
-        (
-            mac,
-            {"field": "enabled", "op": "==", "value": True},
-            "Mandatory Access Control ({type}) is enabled and active",
-            "good",
-        ),
-        (
-            mac,
-            {"field": "enabled", "op": "==", "value": False},
-            "No MAC system (AppArmor/SELinux) detected - missing additional security layer",
-            "warnings",
-        ),
-        # Kernel
-        (
-            kernel,
-            {"field": "hardening_percentage", "op": ">=", "value": 80},
-            "Excellent kernel hardening ({hardening_percentage}%)",
-            "good",
-        ),
-        (
-            kernel,
-            [
-                {"field": "hardening_percentage", "op": ">=", "value": 60},
-                {"field": "hardening_percentage", "op": "<", "value": 80},
-            ],
-            "Moderate kernel hardening ({hardening_percentage}%) - room for improvement",
-            "warnings",
-        ),
-        (
-            kernel,
-            {"field": "hardening_percentage", "op": "<", "value": 60},
-            "Poor kernel hardening ({hardening_percentage}%) - critical parameters not configured",
-            "issues",
-        ),
-        # Fail2ban
-        (
-            fail2ban,
-            [
-                {"field": "installed", "op": "==", "value": True},
-                {"field": "active", "op": "==", "value": True},
-            ],
-            "Fail2ban active for automated intrusion prevention",
-            "good",
-        ),
-        # SSL
-        (
-            ssl,
-            [
-                {"field": "checked", "op": "==", "value": True},
-                {"field": "expired", "op": ">", "value": 0},
-            ],
-            "{expired} SSL certificate(s) have EXPIRED - critical issue",
-            "issues",
-        ),
-        (
-            ssl,
-            [
-                {"field": "checked", "op": "==", "value": True},
-                {"field": "expiring_soon_30days", "op": ">", "value": 0},
-            ],
-            "{expiring_soon_30days} SSL certificate(s) expiring in less than 30 days",
-            "warnings",
-        ),
-        (
-            ssl,
-            [
-                {"field": "checked", "op": "==", "value": True},
-                {"field": "total_certificates", "op": ">", "value": 0},
-                {"field": "expired", "op": "==", "value": 0},
-                {"field": "expiring_soon_30days", "op": "==", "value": 0},
-            ],
-            "All {total_certificates} SSL certificates are valid and not expiring soon",
-            "good",
-        ),
-        # Disk
-        (
-            disk,
-            [
-                {"field": "checked", "op": "==", "value": True},
-                {"field": "critical_count", "op": ">", "value": 0},
-            ],
-            "{critical_count} filesystem(s) critically low on space (>90% full)",
-            "issues",
-        ),
-        (
-            disk,
-            [
-                {"field": "checked", "op": "==", "value": True},
-                {"field": "warning_count", "op": ">", "value": 0},
-                {"field": "critical_count", "op": "==", "value": 0},
-            ],
-            "{warning_count} filesystem(s) running low on space (>70% full)",
-            "warnings",
-        ),
-        (
-            disk,
-            [
-                {"field": "checked", "op": "==", "value": True},
-                {"field": "critical_count", "op": "==", "value": 0},
-                {"field": "warning_count", "op": "==", "value": 0},
-            ],
-            "All filesystems have adequate free space",
-            "good",
-        ),
-        # CVE
-        (
-            cve,
-            [
-                {"field": "checked", "op": "==", "value": True},
-                {"field": "critical_vulnerabilities", "op": ">", "value": 0},
-            ],
-            "{critical_vulnerabilities} CRITICAL CVE vulnerabilities detected - patch immediately",
-            "issues",
-        ),
-        (
-            cve,
-            [
-                {"field": "checked", "op": "==", "value": True},
-                {"field": "high_vulnerabilities", "op": ">", "value": 0},
-            ],
-            "{high_vulnerabilities} high-severity CVE vulnerabilities found",
-            "warnings",
-        ),
-        (
-            cve,
-            [
-                {"field": "checked", "op": "==", "value": True},
-                {"field": "vulnerabilities_found", "op": ">", "value": 0},
-            ],
-            "{vulnerabilities_found} known vulnerabilities detected",
-            "warnings",
-        ),
-        # CIS
-        (
-            cis,
-            [
-                {"field": "checked", "op": "==", "value": True},
-                {"field": "compliance_percentage", "op": ">=", "value": 90},
-            ],
-            "Excellent CIS Benchmark compliance ({compliance_percentage}%)",
-            "good",
-        ),
-        (
-            cis,
-            [
-                {"field": "checked", "op": "==", "value": True},
-                {"field": "compliance_percentage", "op": ">=", "value": 70},
-                {"field": "compliance_percentage", "op": "<", "value": 90},
-            ],
-            "Moderate CIS compliance ({compliance_percentage}%) - {failed} controls failing",
-            "warnings",
-        ),
-        (
-            cis,
-            [
-                {"field": "checked", "op": "==", "value": True},
-                {"field": "compliance_percentage", "op": "<", "value": 70},
-            ],
-            "Poor CIS compliance ({compliance_percentage}%) - {failed} controls failing",
-            "issues",
-        ),
-        # Containers
-        (
-            containers,
-            [
-                {"field": "checked", "op": "==", "value": True},
-                {"field": "critical_vulnerabilities", "op": ">", "value": 0},
-            ],
-            "{critical_vulnerabilities} CRITICAL vulnerabilities in container images",
-            "issues",
-        ),
-        (
-            containers,
-            [
-                {"field": "checked", "op": "==", "value": True},
-                {"field": "high_vulnerabilities", "op": ">", "value": 0},
-            ],
-            "{high_vulnerabilities} HIGH vulnerabilities in container images",
-            "warnings",
-        ),
-        # NIST
-        (
-            nist,
-            [
-                {"field": "checked", "op": "==", "value": True},
-                {"field": "compliance_percentage", "op": ">=", "value": 80},
-            ],
-            "Good NIST 800-53 compliance ({compliance_percentage}%)",
-            "good",
-        ),
-        (
-            nist,
-            [
-                {"field": "checked", "op": "==", "value": True},
-                {"field": "failed", "op": ">", "value": 0},
-            ],
-            "NIST 800-53: {failed} controls failing",
-            "warnings",
-        ),
-        # PCI
-        (
-            pci,
-            [
-                {"field": "checked", "op": "==", "value": True},
-                {"field": "compliance_percentage", "op": "<", "value": 100},
-            ],
-            "PCI-DSS compliance at {compliance_percentage}% - {failed} controls failing",
-            "issues",
-        ),
-        (
-            pci,
-            [
-                {"field": "checked", "op": "==", "value": True},
-                {"field": "compliance_percentage", "op": "==", "value": 100},
-            ],
-            "Full PCI-DSS technical baseline compliance",
-            "good",
-        ),
-        # Web Headers
-        (
-            webheaders,
-            [
-                {"field": "checked", "op": "==", "value": True},
-                {"field": "total_missing_high", "op": ">", "value": 0},
-            ],
-            "{total_missing_high} critical security headers missing from web server",
-            "issues",
-        ),
-        (
-            webheaders,
-            [
-                {"field": "checked", "op": "==", "value": True},
-                {"field": "total_missing_medium", "op": ">", "value": 0},
-            ],
-            "{total_missing_medium} security headers missing - consider adding",
-            "warnings",
-        ),
-        # Filesystem
-        (
-            filesystem,
-            [
-                {"field": "checked", "op": "==", "value": True},
-                {"field": "world_writable_files", "op": ">", "value": 0},
-            ],
-            "{world_writable_files} world-writable files found - permission issue",
-            "issues",
-        ),
-        (
-            filesystem,
-            [
-                {"field": "checked", "op": "==", "value": True},
-                {"field": "suid_sgid_suspicious", "op": ">", "value": 5},
-            ],
-            "{suid_sgid_suspicious} non-standard SUID binaries - potential risk",
-            "warnings",
-        ),
-        # Network
-        (
-            network,
-            [
-                {"field": "checked", "op": "==", "value": True},
-                {"field": "suspicious_connections", "op": ">", "value": 0},
-            ],
-            "{suspicious_connections} suspicious network connections detected",
-            "suspicious",
-        ),
-        (
-            network,
-            [
-                {"field": "checked", "op": "==", "value": True},
-                {"field": "listening_services", "op": ">", "value": 20},
-            ],
-            "{listening_services} services listening - large attack surface",
-            "warnings",
-        ),
-        # Users
-        (
-            users,
-            [
-                {"field": "checked", "op": "==", "value": True},
-                {"field": "uid_zero_users", "op": ">", "value": 0},
-            ],
-            "{uid_zero_users} unauthorized users with root privileges (UID 0)",
-            "issues",
-        ),
-        (
-            users,
-            [
-                {"field": "checked", "op": "==", "value": True},
-                {"field": "users_without_password", "op": ">", "value": 0},
-            ],
-            "{users_without_password} user accounts without password set",
-            "warnings",
-        ),
-    ]
+    # Load analysis rules from YAML configuration
+    rules_by_analyzer = load_analysis_rules()
+
+    # Build analyzer data map for easy lookup
+    analyzer_data_map = {
+        "firewall": firewall,
+        "ssh": ssh,
+        "threats": threats,
+        "services": services,
+        "docker": docker,
+        "updates": updates,
+        "mac": mac,
+        "kernel": kernel,
+        "fail2ban": fail2ban,
+        "ssl": ssl,
+        "disk": disk,
+        "cve": cve,
+        "cis": cis,
+        "nist": nist,
+        "pci": pci,
+        "containers": containers,
+        "rootkit": rootkit,
+        "users": users,
+    }
+
+    # Convert YAML rules to legacy format for processing
+    analysis_rules = []
+    for analyzer_name, rules in rules_by_analyzer.items():
+        analyzer_data = analyzer_data_map.get(analyzer_name)
+        if analyzer_data is None:
+            continue
+
+        for rule in rules:
+            conditions = rule["conditions"]
+            message = rule["message"]
+            category = rule["category"]
+            analysis_rules.append((analyzer_data, conditions, message, category))
+
+    # Fallback: if no rules loaded, use empty list (system will still work with recommendations)
+    if not analysis_rules:
+        import warnings
+
+        warnings.warn("No analysis rules loaded - analysis summary will be limited")
 
     # Process rules
     for rule in analysis_rules:

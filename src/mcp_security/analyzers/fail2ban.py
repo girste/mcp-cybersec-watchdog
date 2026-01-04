@@ -1,14 +1,14 @@
 """Fail2ban analysis module."""
 
 import re
-from ..utils.detect import run_with_sudo
+from ..utils.command import run_command_sudo
 
 
 def get_fail2ban_status():
     """Get fail2ban overall status."""
-    result = run_with_sudo(["fail2ban-client", "status"])
+    result = run_command_sudo(["fail2ban-client", "status"])
 
-    if result:
+    if result and result.success:
 
         # Extract jail list
         jails = []
@@ -26,9 +26,9 @@ def get_fail2ban_status():
 
 def get_jail_status(jail_name):
     """Get status for specific fail2ban jail."""
-    result = run_with_sudo(["fail2ban-client", "status", jail_name])
+    result = run_command_sudo(["fail2ban-client", "status", jail_name])
 
-    if result:
+    if result and result.success:
 
         output = result.stdout
 

@@ -1,15 +1,16 @@
 """Security updates analysis."""
 
-from ..utils.detect import run_with_sudo, get_distro
+from ..utils.command import run_command_sudo
+from ..utils.detect import get_distro
 
 
 def check_apt_updates():
     """Check for available security updates on Debian/Ubuntu."""
     # Update package cache (non-invasive, just downloads metadata)
-    run_with_sudo(["apt-get", "update", "-qq"])
+    run_command_sudo(["apt-get", "update", "-qq"])
 
     # Get upgradable packages
-    result = run_with_sudo(["apt", "list", "--upgradable"])
+    result = run_command_sudo(["apt", "list", "--upgradable"])
 
     if not result:
         return None
@@ -45,7 +46,7 @@ def check_apt_updates():
 
 def check_yum_updates():
     """Check for available security updates on RHEL/CentOS."""
-    result = run_with_sudo(["yum", "check-update", "--security", "-q"])
+    result = run_command_sudo(["yum", "check-update", "--security", "-q"])
 
     if not result:
         return None

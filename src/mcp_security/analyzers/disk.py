@@ -1,6 +1,6 @@
 """Disk usage analysis module."""
 
-import subprocess
+from ..utils.command import run_command_sudo
 
 DISK_USAGE_CRITICAL = 90
 DISK_USAGE_HIGH = 80
@@ -53,55 +53,48 @@ def _assess_disk_usage(usage_percent, mount_point):
 
 def get_disk_usage():
     """Get disk usage for all mounted filesystems."""
-    try:
-        result = subprocess.run(
-            ["df", "-h", "--output=source,fstype,size,used,avail,pcent,target"],
-            stdout=subprocess.PIPE,
-            stderr=subprocess.DEVNULL,
-            text=True,
-            timeout=10,
+    result = run_command_sudo(
+        ["df", "-h", "--output=source,fstype,size,used,avail,pcent,target"],
+        timeout=10,
+    )
+
+    if not result or not result.success:
+        return []
+
+    lines = result.stdout.strip().split("\n")
+    if len(lines) < 2:
+        return []
+
+    filesystems = []
+    for line in lines[1:]:
+        parts = line.split()
+        if len(parts) < 7:
+            continue
+
+        source, fstype, size, used, avail, percent, target = parts
+        percent = percent.rstrip("%")
+
+        if _should_skip_filesystem(fstype, source):
+            continue
+
+        try:
+            usage_percent = int(percent)
+        except ValueError:
+            continue
+
+        filesystems.append(
+            {
+                "device": source,
+                "mount": target,
+                "size": size,
+                "used": used,
+                "available": avail,
+                "usage_percent": usage_percent,
+                "fstype": fstype,
+            }
         )
 
-        if result.returncode != 0:
-            return []
-
-        lines = result.stdout.strip().split("\n")
-        if len(lines) < 2:
-            return []
-
-        filesystems = []
-        for line in lines[1:]:
-            parts = line.split()
-            if len(parts) < 7:
-                continue
-
-            source, fstype, size, used, avail, percent, target = parts
-            percent = percent.rstrip("%")
-
-            if _should_skip_filesystem(fstype, source):
-                continue
-
-            try:
-                usage_percent = int(percent)
-            except ValueError:
-                continue
-
-            filesystems.append(
-                {
-                    "device": source,
-                    "mount": target,
-                    "size": size,
-                    "used": used,
-                    "available": avail,
-                    "usage_percent": usage_percent,
-                    "fstype": fstype,
-                }
-            )
-
-        return filesystems
-
-    except (subprocess.SubprocessError, subprocess.TimeoutExpired):
-        return []
+    return filesystems
 
 
 def analyze_disk():

@@ -24,6 +24,7 @@ classifiers = [
 
 dependencies = [
     "mcp>=1.0.0",
+    "pyyaml>=6.0",
 ]
 
 [project.optional-dependencies]
@@ -45,6 +46,7 @@ where = ["src"]
 
 [tool.setuptools.package-data]
 "*" = ["*.sh"]
+"mcp_security.data" = ["*.yaml", "*.yml"]
 
 [project.urls]
 Homepage = "https://github.com/girste/mcp-cybersec-watchdog"

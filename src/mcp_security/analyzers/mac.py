@@ -2,7 +2,7 @@
 
 import re
 import subprocess
-from ..utils.detect import run_with_sudo
+from ..utils.command import run_command_sudo
 
 
 def check_apparmor():
@@ -57,7 +57,7 @@ def check_apparmor():
 
 def check_selinux():
     """Check SELinux status and mode."""
-    result = run_with_sudo(["getenforce"])
+    result = run_command_sudo(["getenforce"])
 
     if not result:
         return None

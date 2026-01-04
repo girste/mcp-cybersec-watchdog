@@ -33,3 +33,7 @@ venv/
 .vscode/
 *.swp
 *.swo
+
+# Personal configuration files
+claude_desktop_config.json
+.mcp-security.json

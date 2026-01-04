@@ -2,7 +2,7 @@
 
 import re
 from collections import Counter
-from ..utils.detect import run_with_sudo
+from ..utils.command import run_command_sudo
 from ..utils.logger import get_logger
 
 logger = get_logger(__name__)
@@ -31,7 +31,7 @@ def parse_failed_ssh_attempts(log_path, days=7):
     except PermissionError:
         logger.debug(f"Permission denied reading {log_path}, trying with sudo")
         # Try with sudo
-        result = run_with_sudo(["cat", log_path])
+        result = run_command_sudo(["cat", log_path])
         if result:
             for line in result.stdout.split("\n"):
                 match = pattern.search(line)

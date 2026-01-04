@@ -1,15 +1,15 @@
 """Firewall analysis module."""
 
 import re
-from ..utils.detect import run_with_sudo
+from ..utils.command import run_command_sudo
+from .base import create_analyzer_result
 
 
 def analyze_ufw():
     """Analyze UFW firewall configuration."""
-    result = run_with_sudo(["ufw", "status", "verbose"])
+    result = run_command_sudo(["ufw", "status", "verbose"])
 
-    if result:
-
+    if result and result.success:
         output = result.stdout
 
         active = "Status: active" in output
@@ -40,10 +40,9 @@ def analyze_ufw():
 
 def analyze_iptables():
     """Analyze iptables configuration."""
-    result = run_with_sudo(["iptables", "-L", "-n"])
+    result = run_command_sudo(["iptables", "-L", "-n"])
 
-    if result:
-
+    if result and result.success:
         output = result.stdout
 
         # Check if there are any rules
@@ -72,9 +71,9 @@ def analyze_iptables():
 
 def analyze_firewalld():
     """Analyze firewalld configuration."""
-    result = run_with_sudo(["firewall-cmd", "--state"])
+    result = run_command_sudo(["firewall-cmd", "--state"])
 
-    if not result:
+    if not result or not result.success:
         return None
 
     active = "running" in result.stdout.lower()
@@ -83,8 +82,8 @@ def analyze_firewalld():
         return None
 
     # Get list of services
-    services_result = run_with_sudo(["firewall-cmd", "--list-services"])
-    services = services_result.stdout.strip().split() if services_result else []
+    services_result = run_command_sudo(["firewall-cmd", "--list-services"])
+    services = services_result.stdout.strip().split() if services_result and services_result.success else []
 
     return {
         "type": "firewalld",
