@@ -21,7 +21,7 @@ def _check_rkhunter_installed():
             ["which", "rkhunter"],
             timeout=5,
         )
-        return result and result.success
+        return result.success if result else False
     except Exception:
         return False
 
@@ -33,7 +33,7 @@ def _check_chkrootkit_installed():
             ["which", "chkrootkit"],
             timeout=5,
         )
-        return result and result.success
+        return result.success if result else False
     except Exception:
         return False
 

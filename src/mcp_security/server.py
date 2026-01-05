@@ -170,8 +170,17 @@ async def call_tool(name: str, arguments: Any) -> list[TextContent]:
                 Path(f"/tmp/mcp-watchdog-{os.getuid()}").resolve(),
             ]
 
-            # Check if path is within allowed directories
-            is_allowed = any(str(path).startswith(str(allowed_dir)) for allowed_dir in allowed_dirs)
+            # Check if path is within allowed directories using secure path comparison
+            is_allowed = False
+            for allowed_dir in allowed_dirs:
+                try:
+                    # Use resolve() to normalize and prevent path traversal
+                    path.relative_to(allowed_dir)
+                    is_allowed = True
+                    break
+                except ValueError:
+                    # path is not relative to allowed_dir
+                    continue
 
             if not is_allowed:
                 return [

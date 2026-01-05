@@ -35,8 +35,8 @@ class SecurityMonitor:
         self.verbose = verbose
         self.running = False
 
-        # Create log directory
-        self.log_dir.mkdir(parents=True, exist_ok=True)
+        # Create log directory with restrictive permissions (owner-only)
+        self.log_dir.mkdir(parents=True, exist_ok=True, mode=0o700)
 
         # Default baseline_path to log_dir/baseline.json if not specified
         if baseline_path is None:

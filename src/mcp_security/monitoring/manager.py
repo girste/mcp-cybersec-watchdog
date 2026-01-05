@@ -83,8 +83,8 @@ class MonitoringManager:
                     "--log-dir",
                     str(self.log_dir),
                 ],
-                stdout=subprocess.PIPE,
-                stderr=subprocess.PIPE,
+                stdout=subprocess.DEVNULL,
+                stderr=subprocess.DEVNULL,
                 start_new_session=True,
             )
 
@@ -93,8 +93,7 @@ class MonitoringManager:
 
             # Check if still running
             if process.poll() is not None:
-                stderr = process.stderr.read().decode()
-                return {"success": False, "error": f"Failed to start: {stderr}"}
+                return {"success": False, "error": "Daemon process terminated immediately after start. Check permissions and log directory."}
 
             # Save PID
             with open(self.pid_file, "w") as f:

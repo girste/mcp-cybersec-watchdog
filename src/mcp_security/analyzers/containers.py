@@ -132,7 +132,7 @@ def analyze_containers():
 
     # Check if trivy is available
     trivy_check = run_command(["which", "trivy"], timeout=5)
-    trivy_available = trivy_check and trivy_check.success
+    trivy_available = trivy_check.success if trivy_check else False
 
     for image in running_images[:5]:  # Limit to 5 images for performance
         image_info = {

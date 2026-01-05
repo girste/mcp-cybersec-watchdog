@@ -35,8 +35,24 @@ $USER ALL=(ALL) NOPASSWD: /usr/bin/yum check-update --security -q
 $USER ALL=(ALL) NOPASSWD: /usr/sbin/apparmor_status
 $USER ALL=(ALL) NOPASSWD: /usr/sbin/getenforce
 
-# Kernel security parameters
-$USER ALL=(ALL) NOPASSWD: /usr/sbin/sysctl -n *
+# Kernel security parameters (specific allowed reads only)
+$USER ALL=(ALL) NOPASSWD: /usr/sbin/sysctl -n kernel.dmesg_restrict
+$USER ALL=(ALL) NOPASSWD: /usr/sbin/sysctl -n kernel.kptr_restrict
+$USER ALL=(ALL) NOPASSWD: /usr/sbin/sysctl -n kernel.yama.ptrace_scope
+$USER ALL=(ALL) NOPASSWD: /usr/sbin/sysctl -n kernel.kexec_load_disabled
+$USER ALL=(ALL) NOPASSWD: /usr/sbin/sysctl -n kernel.randomize_va_space
+$USER ALL=(ALL) NOPASSWD: /usr/sbin/sysctl -n net.ipv4.conf.all.accept_source_route
+$USER ALL=(ALL) NOPASSWD: /usr/sbin/sysctl -n net.ipv4.conf.default.accept_source_route
+$USER ALL=(ALL) NOPASSWD: /usr/sbin/sysctl -n net.ipv4.conf.all.send_redirects
+$USER ALL=(ALL) NOPASSWD: /usr/sbin/sysctl -n net.ipv4.conf.default.send_redirects
+$USER ALL=(ALL) NOPASSWD: /usr/sbin/sysctl -n net.ipv4.icmp_echo_ignore_broadcasts
+$USER ALL=(ALL) NOPASSWD: /usr/sbin/sysctl -n net.ipv4.icmp_ignore_bogus_error_responses
+$USER ALL=(ALL) NOPASSWD: /usr/sbin/sysctl -n net.ipv4.conf.all.rp_filter
+$USER ALL=(ALL) NOPASSWD: /usr/sbin/sysctl -n net.ipv4.conf.default.rp_filter
+$USER ALL=(ALL) NOPASSWD: /usr/sbin/sysctl -n net.ipv4.tcp_syncookies
+$USER ALL=(ALL) NOPASSWD: /usr/sbin/sysctl -n fs.protected_hardlinks
+$USER ALL=(ALL) NOPASSWD: /usr/sbin/sysctl -n fs.protected_symlinks
+$USER ALL=(ALL) NOPASSWD: /usr/sbin/sysctl -n fs.suid_dumpable
 EOF
 
 # Set correct permissions
