@@ -38,8 +38,9 @@ CIS_SECTIONS = {
 }
 
 
-def _check_file_permissions(path, expected_perms, owner="root", group="root",
-                           alt_perms=None, alt_owner=None, alt_group=None):
+def _check_file_permissions(
+    path, expected_perms, owner="root", group="root", alt_perms=None, alt_owner=None, alt_group=None
+):
     """Check if file has correct permissions and ownership.
 
     Supports alternative valid configurations (e.g., Debian/Ubuntu standards).
@@ -656,8 +657,7 @@ def check_logging_controls():
     # 4.4 - Log file permissions
     # 4.4.1 - /var/log permissions (accept Debian/Ubuntu standard 775 root:syslog)
     passed, detail = _check_file_permissions(
-        "/var/log", "755", "root", "root",
-        alt_perms="775", alt_group="syslog"
+        "/var/log", "755", "root", "root", alt_perms="775", alt_group="syslog"
     )
     controls.append(
         {
@@ -671,8 +671,7 @@ def check_logging_controls():
 
     # 4.4.2 - /var/log/syslog permissions (accept rsyslog standard syslog:adm 640)
     passed, detail = _check_file_permissions(
-        "/var/log/syslog", "640", "root", "root",
-        alt_owner="syslog", alt_group="adm"
+        "/var/log/syslog", "640", "root", "root", alt_owner="syslog", alt_group="adm"
     )
     controls.append(
         {
@@ -905,7 +904,9 @@ def analyze_cis():
             if control["passed"]:
                 achieved_weight += weight
 
-        profile_scores[profile_name] = round((achieved_weight / total_weight * 100) if total_weight > 0 else 0, 1)
+        profile_scores[profile_name] = round(
+            (achieved_weight / total_weight * 100) if total_weight > 0 else 0, 1
+        )
 
     issues = []
     for control in all_controls:

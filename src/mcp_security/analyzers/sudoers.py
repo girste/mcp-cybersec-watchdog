@@ -109,7 +109,10 @@ def _check_dangerous_wildcards(entries):
                 user = match.group(1) if match else "unknown"
 
                 # Skip if this is an expected full access entry for system accounts
-                if description == "Full root access (user ALL=(ALL) ALL)" and user in EXPECTED_FULL_ACCESS:
+                if (
+                    description == "Full root access (user ALL=(ALL) ALL)"
+                    and user in EXPECTED_FULL_ACCESS
+                ):
                     continue
 
                 findings.append(

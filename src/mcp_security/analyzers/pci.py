@@ -225,7 +225,9 @@ def analyze_pci():
             if control["passed"]:
                 achieved_weight += weight
 
-        profile_scores[profile_name] = round((achieved_weight / total_weight * 100) if total_weight > 0 else 0, 1)
+        profile_scores[profile_name] = round(
+            (achieved_weight / total_weight * 100) if total_weight > 0 else 0, 1
+        )
 
     issues = []
     for control in all_controls:

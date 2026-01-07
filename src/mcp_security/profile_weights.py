@@ -115,40 +115,32 @@ CATEGORY_WEIGHTS = {
 CIS_CONTROL_CATEGORIES = {
     # Filesystem modules (cramfs, freevxfs, jffs2, hfs, hfsplus, udf)
     "1.1.1.": "module_blacklisting",
-
     # Partition mounting (/tmp, /var, /var/tmp, /var/log, /home)
     "1.1.2.": "filesystem_partitions",
     "1.1.3.": "filesystem_partitions",
     "1.1.4.": "filesystem_partitions",
     "1.1.5.": "filesystem_partitions",
     "1.1.6.": "filesystem_partitions",
-
     # /dev/shm hardening
     "1.1.7.": "filesystem_partitions",
-
     # AIDE
     "1.3.1": "file_integrity",
-
     # Bootloader
     "1.4.": "password_policy",
-
     # Services (xinetd, inetd, X11, Avahi, CUPS, DHCP, LDAP, NFS, DNS, FTP, HTTP, etc.)
     "2.1.": "updates",  # Remove unnecessary services
     "2.2.": "updates",
     "2.3.": "updates",
-
     # Network configuration
     "3.1.": "network_hardening",  # IPv6
     "3.2.": "network_hardening",  # IP forwarding
     "3.3.": "network_hardening",  # Network parameters
     "3.4.": "module_blacklisting",  # Uncommon protocols (DCCP, SCTP, RDS, TIPC)
-
     # Logging and auditing
     "4.1.": "audit_logging",
     "4.2.": "audit_logging",
     "4.3": "audit_logging",
     "4.4.": "audit_logging",
-
     # Access control
     "5.1.": "password_policy",  # Cron
     "5.2.": "ssh",  # SSH

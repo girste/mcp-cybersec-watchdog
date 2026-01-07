@@ -198,7 +198,7 @@ def calculate_profile_scores(cis, nist, pci):
             "cis": cis_profiles,
             "nist": nist_profiles,
             "pci": pci_profiles,
-        }
+        },
     }
 
 
