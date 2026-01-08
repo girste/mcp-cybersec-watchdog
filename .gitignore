@@ -38,3 +38,7 @@ venv/
 claude_desktop_config.json
 .mcp-security.json
 PUBLISH_TO_PYPI.md
+RELEASE_PROCESS.md
+REFACTORING.md
+MONITORING.md
+INTERNAL_DOCS.md
